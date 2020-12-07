@@ -1,6 +1,3 @@
-#startup with following command from normal console
-## python real_time_object_detection.py --path <Project-Location>
-
 # import the necessary packages
 from imutils.video import VideoStream
 from imutils.video import FPS
@@ -10,10 +7,13 @@ import imutils
 import time
 import cv2
 
+'''
+change this path to your project directory!
+(or maybe automatically detect path somehow)
+'''
+basePath = "/home/pi/Desktop/TrafficMonitoring"
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
-ap.add_argument("-p", "--path", required=True,
-	help="path project")
 ap.add_argument("-c", "--confidence", type=float, default=0.2,
 	help="minimum probability to filter weak detections")
 args = vars(ap.parse_args())
@@ -28,7 +28,6 @@ COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
 
 # load our serialized model from disk
 print("[INFO] loading model...")
-basePath = args["path"]
 ## net = cv2.dnn.readNetFromCaffe(basePath + "/models/mobileNet_cars/mobilenet_yolov3_deploy.prototxt",
 ##        basePath + "/models/mobileNet_cars/mobilenet_yolov3_deploy_iter_63000.caffemodel")
 net = cv2.dnn.readNetFromCaffe(basePath + "/models/MobileNetSSD/MobileNetSSD_deploy.prototxt.txt",
@@ -48,7 +47,7 @@ while True:
     # grab the frame from the threaded video stream and resize it
     # to have a maximum width of 400 pixels
     frame = vs.read()
-    frame = imutils.resize(frame, width=400)
+    frame = imutils.resize(frame, width=1000)
     # grab the frame dimensions and convert it to a blob
     (h, w) = frame.shape[:2]
     blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)),
