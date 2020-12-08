@@ -1,4 +1,5 @@
 # import the necessary packages
+import os
 from imutils.video import VideoStream
 from imutils.video import FPS
 import numpy as np
@@ -11,7 +12,7 @@ import cv2
 change this path to your project directory!
 (or maybe automatically detect path somehow)
 '''
-basePath = "/home/pi/Desktop/TrafficMonitoring"
+basePath = os.path.dirname(os.path.realpath(__file__))
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-c", "--confidence", type=float, default=0.2,
