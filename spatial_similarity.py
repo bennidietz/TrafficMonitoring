@@ -1,3 +1,5 @@
+import math
+
 def get_iou(bb1, bb2):
     """
     source: https://stackoverflow.com/a/42874377
@@ -50,10 +52,24 @@ def get_iou(bb1, bb2):
     assert iou <= 1.0
     return iou
 
+def center(bbox):
+    return [(bbox["x2"]-bbox["x1"])/2, (bbox["y2"]-bbox["y1"])/2]
+
 def area(bbox):
     return (bbox["x2"]-bbox["x1"]) * (bbox["y2"]-bbox["y1"])
 
-def similarity(detection1, detection2):
+def getRatio(value1, value2):
+    if value1 == 0 or value2 == 0: return 0
+    if value1 > value2: return float(value2) / float(value1)
+    else: return float(value1) / float(value2)
+
+def distance(point1, point2):
+    return math.sqrt( (point2[0] - point1[0])**2 + (point2[1] - point1[1])**2 )
+
+def similarityForDistance(distance):
+    return (-0.002000)*distance*distance - 0.3 * distance + 100.0
+
+def similarity(detection1, detection2, width):
     '''
         calculate the similarity of two bounding boxes
         -> the more similiar two bounding boxes are, 
@@ -63,5 +79,9 @@ def similarity(detection1, detection2):
                 "x2": detection1[4], "y2": detection1[5]})
     bbox_2 = dict({"x1": detection2[2], "y1": detection2[3],
                 "x2": detection2[4], "y2": detection2[5]})
-    #meanArea = (area(bbox_1) + area(bbox_2)) / 2
-    return get_iou(bbox_1, bbox_2)
+    ratio_iou_percent = get_iou(bbox_1, bbox_2) * 100
+    ratio_area = getRatio(area(bbox_1), area(bbox_2))
+    dist_centers = distance(center(bbox_1), center(bbox_2))
+    sim_dist = similarityForDistance(dist_centers)
+    meanSimiliarity = (ratio_area + sim_dist) / 2
+    return ratio_iou_percent

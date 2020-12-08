@@ -1,5 +1,8 @@
 # import the necessary packages
 import os
+import time
+import json
+from counting_cars import Detection, analyseDectectionData, belongsToBboxes
 from imutils.video import VideoStream
 from imutils.video import FPS
 import numpy as np
@@ -43,6 +46,9 @@ vs = VideoStream(src=0).start()
 time.sleep(2.0)
 fps = FPS().start()
 
+collectedDetections = []
+counter = 1
+
 # loop over the frames from the video stream
 while True:
     # grab the frame from the threaded video stream and resize it
@@ -72,8 +78,21 @@ while True:
             # the bounding box for the object
             box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
             (startX, startY, endX, endY) = box.astype("int")
+            # check if the car was already detected before
+            millis = int(round(time.time() * 1000))
+            #collectedDetections.append(json.dumps([str(confidence), millis, str(startX), str(startY), str(endX), str(endY)]))
+            currCounter = None
+            currEleemtn = [confidence, millis, startX, startY, endX, endY]
+            belongingIndex = belongsToBboxes(collectedDetections, currEleemtn)
+            if belongingIndex == -1:
+                collectedDetections.append([counter, currEleemtn])
+                counter = counter + 1
+                currCounter = counter
+            else:
+                collectedDetections[belongingIndex].append(currEleemtn)
+                currCounter = collectedDetections[belongingIndex][0]
             # draw the prediction on the frame
-            label = "{}: {:.2f}%".format(CLASSES[idx],confidence * 100)
+            label = "{}: {:.2f}%".format(CLASSES[idx],confidence * 100) + " " + str(currCounter)
             cv2.rectangle(frame, (startX, startY), (endX, endY),COLORS[idx], 2)
             y = startY - 15 if startY - 15 > 15 else startY + 15
             cv2.putText(frame, label, (startX, y),cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
@@ -88,6 +107,7 @@ while True:
     fps.update()
 # stop the timer and display FPS information
 fps.stop()
+print(collectedDetections)
 print("[INFO] elapsed time: {:.2f}".format(fps.elapsed()))
 print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
 # do a bit of cleanup

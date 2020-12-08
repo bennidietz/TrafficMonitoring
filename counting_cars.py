@@ -10,6 +10,25 @@ class Detection:
         self.milliseconds = milliseconds
         self.bbox = bbox
 
+def belongsToBboxes(detectedArray, bbox):
+    '''
+        if the bbox belongs to other bboxes (seems to be of the same car),
+            the index is given back
+        else
+            -1 is returned
+    '''
+    minsim = 0
+    currIndex = -1
+    for index, car in enumerate(detectedArray):
+        sim = similarity(car[-1], bbox, 1000)
+        print(sim)
+        if sim > minsim:
+            minsim = sim
+            currIndex = index
+    print("hier", minsim)
+    if minsim > 60.0: return currIndex
+    else: return -1
+
 def analyseDectectionData(detections_array):
     '''
         this function will be later used to group the detected boundingboxes of the data
@@ -40,7 +59,9 @@ def analyseTestData(detections_array, frameWidth):
     for curr_index, curr_detection in enumerate(detections_array):
         detected_cars.append([detections_array[curr_index]])
         for compared_index, compared_detection in enumerate(detections_array):
-            if curr_index != compared_index and similarity(curr_detection, compared_detection) > 0.1:
+            sim = similarity(curr_detection, compared_detection, 1000)
+            print(sim)
+            if curr_index != compared_index and sim > 10:
                 detected_cars[-1].append(compared_detection)
                 del detections_array[compared_index]
     return detected_cars

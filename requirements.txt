@@ -1,0 +1,3 @@
+# python -m pip install imutils
+opencv-python==4.1.0.25 opencv-contrib-python==4.1.0.25
+imutils
