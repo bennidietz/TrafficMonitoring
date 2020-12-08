@@ -31,6 +31,30 @@ def analyseDectectionData(detections_array):
         #print(detection.confidence, detection.milliseconds, detection.bbox)
         pass
 
+def belongsToBboxes(detectedArray, bbox):
+    '''
+        if the bbox belongs to other bboxes (seems to be of the same car),
+            the index is given back
+        else
+            -1 is returned
+    '''
+    minsim = 0
+    currIndex = -1
+    for index, car in enumerate(detectedArray):
+        sim = similarity(car[-1], bbox)
+        print(sim)
+        if sim > minsim:
+            minsim = sim
+            currIndex = index
+    if minsim > 0.1 and currIndex != -1:
+        if bbox[1]-detectedArray[currIndex][-1][1] > 1000:
+            # time difference too high
+            return -1
+        else:
+            return currIndex
+    else: 
+        return -1
+
 def analyseTestData(detections_array, frameWidth):
     '''
         this function takes test data in that was obtained from the real time object detection python script
