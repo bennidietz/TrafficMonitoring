@@ -109,14 +109,22 @@ fps.stop()
 print("[INFO] elapsed time: {:.2f}".format(fps.elapsed()))
 print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
 # save collected data to csv
-with open('visualization/example.csv', 'wb') as f:
-    f.write("id,type,license_plate,date,time")
-    f.write('\n')
+output_file_path = "visualization/output.csv"
+addCounter = 0
+if not os.path.isfile(output_file_path):
+    with open(output_file_path, 'a') as f:
+        f.write("id,type,license_plate,date,time")
+        f.write('\n')
+else:
+    with open(output_file_path, 'rb') as fh:
+        for line in fh:
+            pass
+        addCounter = int(line[:line.index(",")])
+with open(output_file_path, 'a') as f:
     for bboxes in collectedDetections:
         last = bboxes[-1]
         dt = datetime.datetime.fromtimestamp(last[1]/1000.0)
-        print(dt)
-        f.write(str(bboxes[0]) + ", car, ," + str(dt.date()) + ", " + str(dt.time())[:5])
+        f.write(str(bboxes[0]+addCounter) + ",car,," + str(dt.date()) + "," + str(dt.time())[:5])
         f.write('\n')
     webbrowser.open('file://' + os.path.realpath("visualization/index.html"), new=2)
 # do a bit of cleanup
