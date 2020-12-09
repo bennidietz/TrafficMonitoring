@@ -1,0 +1,110 @@
+/*---------- General ----------*/
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #EEEEEE;
+  font-family: "Montserrat";
+  color: #000000;
+}
+
+[v-cloak] {
+  display: none;
+}
+
+.h-load {
+  height: 100vh;
+  width: 100vw;
+  display: none;
+}
+
+.h-load__icon {
+  font-size: 3rem;
+}
+
+[v-cloak] + .h-load {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+table {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+tr:nth-child(2n) {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+th, td {
+  padding: 10px;
+  text-align: left;
+}
+
+td {
+  font-size: 0.8rem;
+}
+
+/*---------- Visualization ----------*/
+
+.visualization {
+  width: 100%;
+  padding: 50px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.visualization__main {
+  width: 100%;
+}
+
+.visualization__canvas {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.visualization__statistics {
+  width: 100%;
+  margin-top: 100px;
+  box-sizing: border-box;
+}
+
+@media screen and (min-width: 900px) {
+  .visualization__main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .visualization__canvas {
+    max-width: 600px;
+    margin: 50px;
+  }
+
+  .visualization__statistics {
+    max-height: 90vh;
+    margin: 50px;
+    overflow-x: auto;
+    overflow-y: auto;
+  }
+}
+
+.visualization__options {
+  padding: 25px;
+  background: #666666;
+  color: #FFFFFF;
+  border-radius: 5px;
+  box-shadow: 0px 0px 5px -1px rgba(0, 0, 0, 0.5);
+}
+
+.visualization__options label {
+  width: 100%;
+}
+
+.visualization__options input {
+  width: 100%;
+  margin-top: 10px;
+}
