@@ -1,6 +1,5 @@
 # import the necessary packages
-import os
-import time
+import os, time, datetime, webbrowser
 from counting_cars import Detection, analyseDectectionData, belongsToBboxes
 from imutils.video import VideoStream
 from imutils.video import FPS
@@ -109,6 +108,17 @@ while True:
 fps.stop()
 print("[INFO] elapsed time: {:.2f}".format(fps.elapsed()))
 print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
+# save collected data to csv
+with open('visualization/example.csv', 'wb') as f:
+    f.write("id,type,license_plate,date,time")
+    f.write('\n')
+    for bboxes in collectedDetections:
+        last = bboxes[-1]
+        dt = datetime.datetime.fromtimestamp(last[1]/1000.0)
+        print(dt)
+        f.write(str(bboxes[0]) + ", car, ," + str(dt.date()) + ", " + str(dt.time())[:5])
+        f.write('\n')
+    webbrowser.open('file://' + os.path.realpath("visualization/index.html"), new=2)
 # do a bit of cleanup
 cv2.destroyAllWindows()
 vs.stop()
