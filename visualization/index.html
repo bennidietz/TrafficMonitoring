@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Traffic Monitoring | Data Visualization</title>
+
+    <!--Fonts and styles-->
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" integrity="sha512-+4zCK9k+qNFUR5X+cKL9EIR+ZOhtIloNl9GIKS57V1MyNsYpYcUrUeQc9vNfzsWfV28IaLL3i96P9sdNyeRssA==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="main.css">
+
+    <!--Load scripts via CDN-->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+
+  </head>
+  <body>
+
+    <div id="visualization" class="visualization" v-cloak>
+      <div class="visualization__main">
+        <canvas id="canvas" class="visualization__canvas"></canvas>
+        <div class="visualization__statistics" v-html="csvTable"></div>
+      </div>
+      <div class="visualization__options">
+        <label for="file">Select data source here</label>
+        <input id="file" type="file" accept=".csv" ref="file" @change="readData" />
+      </div>
+    </div>
+    <div class="h-load">
+      <div class="h-load__icon fas fa-circle-notch fa-spin fa-3x fa-fw"></div>
+    </div>
+
+    <!--Main JS script-->
+    <script src="main.js"></script>
+  </body>
+</html>

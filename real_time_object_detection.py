@@ -1,5 +1,6 @@
 # import the necessary packages
-import os
+import os, time, datetime, webbrowser
+from counting_cars import Detection, analyseDectectionData, belongsToBboxes
 from imutils.video import VideoStream
 from imutils.video import FPS
 import numpy as np
@@ -43,6 +44,9 @@ vs = VideoStream(src=0).start()
 time.sleep(2.0)
 fps = FPS().start()
 
+collectedDetections = []
+counter = 1
+
 # loop over the frames from the video stream
 while True:
     # grab the frame from the threaded video stream and resize it
@@ -72,8 +76,22 @@ while True:
             # the bounding box for the object
             box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
             (startX, startY, endX, endY) = box.astype("int")
+
+            # check if the car was already detected before
+            millis = int(round(time.time() * 1000))
+            #collectedDetections.append(json.dumps([str(confidence), millis, str(startX), str(startY), str(endX), str(endY)]))
+            currCounter = None
+            currEleemtn = [confidence, millis, startX, startY, endX, endY]
+            belongingIndex = belongsToBboxes(collectedDetections, currEleemtn)
+            if belongingIndex == -1:
+                collectedDetections.append([counter, currEleemtn])
+                counter = counter + 1
+                currCounter = counter
+            else:
+                collectedDetections[belongingIndex].append(currEleemtn)
+                currCounter = collectedDetections[belongingIndex][0]
             # draw the prediction on the frame
-            label = "{}: {:.2f}%".format(CLASSES[idx],confidence * 100)
+            label = "{}: {:.2f}%".format(CLASSES[idx],confidence * 100) + " " + str(currCounter)
             cv2.rectangle(frame, (startX, startY), (endX, endY),COLORS[idx], 2)
             y = startY - 15 if startY - 15 > 15 else startY + 15
             cv2.putText(frame, label, (startX, y),cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
@@ -90,6 +108,25 @@ while True:
 fps.stop()
 print("[INFO] elapsed time: {:.2f}".format(fps.elapsed()))
 print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
+# save collected data to csv
+output_file_path = "visualization/output.csv"
+addCounter = 0
+if not os.path.isfile(output_file_path):
+    with open(output_file_path, 'a') as f:
+        f.write("id,type,license_plate,date,time")
+        f.write('\n')
+else:
+    with open(output_file_path, 'rb') as fh:
+        for line in fh:
+            pass
+        addCounter = int(line[:line.index(",")])
+with open(output_file_path, 'a') as f:
+    for bboxes in collectedDetections:
+        last = bboxes[-1]
+        dt = datetime.datetime.fromtimestamp(last[1]/1000.0)
+        f.write(str(bboxes[0]+addCounter) + ",car,," + str(dt.date()) + "," + str(dt.time())[:5])
+        f.write('\n')
+    webbrowser.open('file://' + os.path.realpath("visualization/index.html"), new=2)
 # do a bit of cleanup
 cv2.destroyAllWindows()
 vs.stop()
