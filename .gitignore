@@ -1,6 +1,7 @@
 
-.DS_Store
-
 .vscode/settings.json
 
-*.pyc 
+*.pyc
+*.DS_Store 
+
+.vscode/
