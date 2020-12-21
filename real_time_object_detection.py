@@ -100,7 +100,7 @@ def analyze_video(stop_condition,vs,frame_skip):
                     cv2.rectangle(frame, (startX, startY), (endX, endY),COLORS[idx], 2)
                     y = startY - 15 if startY - 15 > 15 else startY + 15
                     cv2.putText(frame, label, (startX, y),cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
-                    print("car!")
+                    # print("car!")
         	# show the output frame
             cv2.imshow("Frame", frame)
             frame_counter = 0
@@ -121,7 +121,7 @@ if live:
     time.sleep(2.0)
 else:
     print("[INFO] starting prerecorded video...")
-    temp_vs = cv2.VideoCapture(basePath + '/out3.mp4')
+    temp_vs = cv2.VideoCapture(basePath + 'testfiles/out3.mp4')
     analyze_video(temp_vs.isOpened,temp_vs, 1)
 
 

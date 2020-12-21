@@ -42,7 +42,7 @@ def belongsToBboxes(detectedArray, bbox):
     currIndex = -1
     for index, car in enumerate(detectedArray):
         sim = similarity(car[-1], bbox)
-        print(sim)
+        # print(sim)
         if sim > minsim:
             minsim = sim
             currIndex = index
