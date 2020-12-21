@@ -57,7 +57,6 @@ def analyze_video(stop_condition,vs,frame_skip):
             print(frame)
             break
         if frame_counter > frame_skip - 1:
-            cv2.imshow("Frame", frame)
             frame = imutils.resize(frame, width=1000)
             # grab the frame dimensions and convert it to a blob
             (h, w) = frame.shape[:2]
@@ -82,7 +81,7 @@ def analyze_video(stop_condition,vs,frame_skip):
                     # the bounding box for the object
                     box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
                     (startX, startY, endX, endY) = box.astype("int")
-        
+
                     # check if the car was already detected before
                     millis = int(round(time.time() * 1000))
                     #collectedDetections.append(json.dumps([str(confidence), millis, str(startX), str(startY), str(endX), str(endY)]))
@@ -102,7 +101,7 @@ def analyze_video(stop_condition,vs,frame_skip):
                     y = startY - 15 if startY - 15 > 15 else startY + 15
                     cv2.putText(frame, label, (startX, y),cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
                     print("car!")
-        		# show the output frame
+        	# show the output frame
             cv2.imshow("Frame", frame)
             frame_counter = 0
             continue
@@ -111,7 +110,7 @@ def analyze_video(stop_condition,vs,frame_skip):
         # if the `q` key was pressed, break from the loop
         if key == ord("q"):
             break
-        
+
 # true when using connected camera, false when using prerecorded mp4
 live = False
 if live:
@@ -122,10 +121,10 @@ if live:
     time.sleep(2.0)
 else:
     print("[INFO] starting prerecorded video...")
-    temp_vs = cv2.VideoCapture(basePath + '/out2.mp4')
-    analyze_video(temp_vs.isOpened,temp_vs, 5)  
-    
-     
+    temp_vs = cv2.VideoCapture(basePath + '/out3.mp4')
+    analyze_video(temp_vs.isOpened,temp_vs, 1)
+
+
 # save collected data to csv
 output_file_path = "visualization/output.csv"
 addCounter = 0
