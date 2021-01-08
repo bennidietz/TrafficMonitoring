@@ -69,6 +69,11 @@ def analyseTestData(detections_array, frameWidth):
                 del detections_array[compared_index]
     return detected_cars
 
+def numberBoxes(array, counter):
+    for i in array:
+        if counter == i[0] and len(i) >= 2:
+            return len(i)-1
+
 with open('testfiles/before.json', 'w') as f:
     json.dump(shortTestDetection, f)
 with open('testfiles/after.json', 'w') as f:

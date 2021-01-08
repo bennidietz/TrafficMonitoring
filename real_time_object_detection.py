@@ -1,18 +1,23 @@
 # import the necessary packages
-import os, time, datetime, webbrowser
-from counting_cars import Detection, analyseDectectionData, belongsToBboxes
+import os, time, datetime, webbrowser, settings
+from counting_cars import Detection, analyseDectectionData, belongsToBboxes, numberBoxes
 from imutils.video import VideoStream
 import numpy as np
 import argparse
 import imutils
 import time
 import cv2
+import json
 
 '''
 change this path to your project directory!
 (or maybe automatically detect path somehow)
 '''
-basePath = os.path.dirname(os.path.realpath(__file__))
+
+testvideoPath = settings.getBaseDir() + '/testfiles/crop.mp4'
+# testvideoPath = settings.getBaseDir() + '/testfiles/out3.mp4'
+# testvideoPath = settings.getBaseDir() + '/testfiles/highway.mov'
+
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-c", "--confidence", type=float, default=0.2,
@@ -29,12 +34,12 @@ COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
 
 # load our serialized model from disk
 print("[INFO] loading model...")
-## net = cv2.dnn.readNetFromCaffe(basePath + "/models/mobileNet_cars/mobilenet_yolov3_deploy.prototxt",
-##        basePath + "/models/mobileNet_cars/mobilenet_yolov3_deploy_iter_63000.caffemodel")
-net = cv2.dnn.readNetFromCaffe(basePath + "/models/MobileNetSSD/MobileNetSSD_deploy.prototxt.txt",
-        basePath + "/models/MobileNetSSD/MobileNetSSD_deploy.caffemodel")
-##net = cv2.dnn.readNetFromCaffe(basePath + "/models/googlenet_cars/MobileNetSSD_deploy.prototxt.txt",
-##        basePath + "/models/googlenet_cars/googlenet_finetune_web_car_iter_10000.caffemodel")
+## net = cv2.dnn.readNetFromCaffe(settings.getBaseDir() + "/models/mobileNet_cars/mobilenet_yolov3_deploy.prototxt",
+##        settings.getBaseDir() + "/models/mobileNet_cars/mobilenet_yolov3_deploy_iter_63000.caffemodel")
+net = cv2.dnn.readNetFromCaffe(settings.getBaseDir() + "/models/MobileNetSSD/MobileNetSSD_deploy.prototxt.txt",
+        settings.getBaseDir() + "/models/MobileNetSSD/MobileNetSSD_deploy.caffemodel")
+##net = cv2.dnn.readNetFromCaffe(settings.getBaseDir() + "/models/googlenet_cars/MobileNetSSD_deploy.prototxt.txt",
+##        settings.getBaseDir() + "/models/googlenet_cars/googlenet_finetune_web_car_iter_10000.caffemodel")
 
 collectedDetections = []
 
@@ -48,6 +53,9 @@ def analyze_video(stop_condition,vs,frame_skip):
     # counts the frames
     frame_counter = 0
     # loop over the frames from the video stream
+    if not os.path.isdir(settings.getOutputDir() + settings.getEnding(testvideoPath)):
+        os.makedirs(settings.getOutputDir() + settings.getEnding(testvideoPath))
+    videoFileDir = settings.getOutputDir() + settings.getEnding(testvideoPath) + "/"
     while stop_condition:
         # grab the frame from the threaded video stream and resize it
         # to have a maximum width of 400 pixels
@@ -86,17 +94,24 @@ def analyze_video(stop_condition,vs,frame_skip):
                     millis = int(round(time.time() * 1000))
                     #collectedDetections.append(json.dumps([str(confidence), millis, str(startX), str(startY), str(endX), str(endY)]))
                     currCounter = None
-                    currEleemtn = [confidence, millis, startX, startY, endX, endY]
+                    currEleemtn = [float(confidence), millis, startX, startY, endX, endY]
                     belongingIndex = belongsToBboxes(collectedDetections, currEleemtn)
                     if belongingIndex == -1:
                         collectedDetections.append([counter, currEleemtn])
+                        print("Car " + str(counter) + " detected...")
+                        # draw the prediction on the frame
+                        label = "{}: {:.2f}%".format(CLASSES[idx],confidence * 100) + " " + str(counter)
+                        cv2.imwrite(videoFileDir + "car%d_%d.jpg" %  (counter, numberBoxes(collectedDetections, counter)),
+                             frame[startY:endY, startX:endX])
                         counter = counter + 1
                         currCounter = counter
                     else:
                         collectedDetections[belongingIndex].append(currEleemtn)
                         currCounter = collectedDetections[belongingIndex][0]
-                    # draw the prediction on the frame
-                    label = "{}: {:.2f}%".format(CLASSES[idx],confidence * 100) + " " + str(currCounter)
+                        cv2.imwrite(videoFileDir + "car%d_%d.jpg" %  (counter, numberBoxes(collectedDetections, currCounter)),
+                             frame[startY:endY, startX:endX])
+                        # draw the prediction on the frame
+                        label = "{}: {:.2f}%".format(CLASSES[idx],confidence * 100) + " " + str(currCounter)
                     cv2.rectangle(frame, (startX, startY), (endX, endY),COLORS[idx], 2)
                     y = startY - 15 if startY - 15 > 15 else startY + 15
                     cv2.putText(frame, label, (startX, y),cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
@@ -121,9 +136,12 @@ if live:
     time.sleep(2.0)
 else:
     print("[INFO] starting prerecorded video...")
-    temp_vs = cv2.VideoCapture(basePath + 'testfiles/out3.mp4')
+    temp_vs = cv2.VideoCapture(testvideoPath)
     analyze_video(temp_vs.isOpened,temp_vs, 1)
 
+json_analyse_path = "testfiles/analyse.json"
+with open(json_analyse_path, 'a') as f:
+    f.write(json.dumps(collectedDetections, separators=(',', ':')))
 
 # save collected data to csv
 output_file_path = "visualization/output.csv"
@@ -143,7 +161,7 @@ with open(output_file_path, 'a') as f:
         dt = datetime.datetime.fromtimestamp(last[1]/1000.0)
         f.write(str(bboxes[0]+addCounter) + ",car,," + str(dt.date()) + "," + str(dt.time())[:5])
         f.write('\n')
-    webbrowser.open('file://' + os.path.realpath("visualization/index.html"), new=2)
+    #webbrowser.open('file://' + os.path.realpath("visualization/index.html"), new=2)
 # do a bit of cleanup
 cv2.destroyAllWindows()
 temp_vs.stop()
