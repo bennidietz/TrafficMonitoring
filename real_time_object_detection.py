@@ -20,7 +20,7 @@ testvideoPath = settings.getBaseDir() + '/testfiles/crop.mp4'
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
-ap.add_argument("-c", "--confidence", type=float, default=0.2,
+ap.add_argument("-c", "--confidence", type=float, default=4.7,
 	help="minimum probability to filter weak detections")
 args = vars(ap.parse_args())
 
