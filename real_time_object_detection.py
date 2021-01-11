@@ -1,6 +1,6 @@
 # import the necessary packages
 import os, time, datetime, webbrowser, settings
-from counting_cars import Detection, analyseDectectionData, belongsToBboxes, numberBoxes
+import counting_cars
 from imutils.video import VideoStream
 import numpy as np
 import argparse
@@ -20,7 +20,7 @@ testvideoPath = settings.getBaseDir() + '/testfiles/crop.mp4'
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
-ap.add_argument("-c", "--confidence", type=float, default=4.7,
+ap.add_argument("-c", "--confidence", type=float, default=0.47,
 	help="minimum probability to filter weak detections")
 args = vars(ap.parse_args())
 
@@ -49,7 +49,7 @@ collectedDetections = []
 # vs: the videostream (could be live from camera or from prerecorded)
 # frame_skip: the amount of frames that are skipped from the video stream (to counter the lag)
 def analyze_video(stop_condition,vs,frame_skip):
-    counter = 1
+    counter = 0
     # counts the frames
     frame_counter = 0
     # loop over the frames from the video stream
@@ -94,22 +94,26 @@ def analyze_video(stop_condition,vs,frame_skip):
                     millis = int(round(time.time() * 1000))
                     #collectedDetections.append(json.dumps([str(confidence), millis, str(startX), str(startY), str(endX), str(endY)]))
                     currCounter = None
-                    currEleemtn = [float(confidence), millis, startX, startY, endX, endY]
-                    belongingIndex = belongsToBboxes(collectedDetections, currEleemtn)
+                    cropped_frame = frame[startY:endY, startX:endX]
+                    meanColor = counting_cars.calcMean(cropped_frame)
+                    currEleemtn = [float(confidence), millis, startX, startY, endX, endY, (startX+endX)/2, (startY+endY)/2, meanColor]
+                    belongingIndex = counting_cars.belongsToBboxes(collectedDetections, currEleemtn)
                     if belongingIndex == -1:
                         collectedDetections.append([counter, currEleemtn])
                         print("Car " + str(counter) + " detected...")
                         # draw the prediction on the frame
                         label = "{}: {:.2f}%".format(CLASSES[idx],confidence * 100) + " " + str(counter)
-                        cv2.imwrite(videoFileDir + "car%d_%d.jpg" %  (counter, numberBoxes(collectedDetections, counter)),
-                             frame[startY:endY, startX:endX])
+                        cv2.imwrite(videoFileDir + "car%d_%d.jpg" %  (counter, counting_cars.numberBoxes(collectedDetections, counter)),
+                            cropped_frame )
                         counter = counter + 1
                         currCounter = counter
                     else:
                         collectedDetections[belongingIndex].append(currEleemtn)
                         currCounter = collectedDetections[belongingIndex][0]
-                        cv2.imwrite(videoFileDir + "car%d_%d.jpg" %  (counter, numberBoxes(collectedDetections, currCounter)),
-                             frame[startY:endY, startX:endX])
+                        shifts = counting_cars.globalChange(collectedDetections[belongingIndex])
+                        #print(shifts)
+                        cv2.imwrite(videoFileDir + "car%d_%d.jpg" %  (currCounter, counting_cars.numberBoxes(collectedDetections, currCounter)),
+                            cropped_frame )
                         # draw the prediction on the frame
                         label = "{}: {:.2f}%".format(CLASSES[idx],confidence * 100) + " " + str(currCounter)
                     cv2.rectangle(frame, (startX, startY), (endX, endY),COLORS[idx], 2)
@@ -164,4 +168,4 @@ with open(output_file_path, 'a') as f:
     #webbrowser.open('file://' + os.path.realpath("visualization/index.html"), new=2)
 # do a bit of cleanup
 cv2.destroyAllWindows()
-temp_vs.stop()
+#temp_vs.stop()
