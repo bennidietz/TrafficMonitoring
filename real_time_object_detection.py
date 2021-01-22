@@ -93,29 +93,13 @@ def analyze_video(stop_condition,vs,frame_skip):
                     # check if the car was already detected before
                     millis = int(round(time.time() * 1000))
                     #collectedDetections.append(json.dumps([str(confidence), millis, str(startX), str(startY), str(endX), str(endY)]))
-                    currCounter = None
+                    
                     cropped_frame = frame[startY:endY, startX:endX]
-                    meanColor = counting_cars.calcMean(cropped_frame)
-                    currEleemtn = [float(confidence), millis, startX, startY, endX, endY, (startX+endX)/2, (startY+endY)/2, meanColor]
-                    belongingIndex = counting_cars.belongsToBboxes(collectedDetections, currEleemtn)
-                    if belongingIndex == -1:
-                        collectedDetections.append([counter, currEleemtn])
-                        print("Car " + str(counter) + " detected...")
-                        # draw the prediction on the frame
-                        label = "{}: {:.2f}%".format(CLASSES[idx],confidence * 100) + " " + str(counter)
-                        cv2.imwrite(videoFileDir + "car%d_%d.jpg" %  (counter, counting_cars.numberBoxes(collectedDetections, counter)),
-                            cropped_frame )
-                        counter = counter + 1
-                        currCounter = counter
-                    else:
-                        collectedDetections[belongingIndex].append(currEleemtn)
-                        currCounter = collectedDetections[belongingIndex][0]
-                        shifts = counting_cars.globalChange(collectedDetections[belongingIndex])
-                        #print(shifts)
-                        cv2.imwrite(videoFileDir + "car%d_%d.jpg" %  (currCounter, counting_cars.numberBoxes(collectedDetections, currCounter)),
-                            cropped_frame )
-                        # draw the prediction on the frame
-                        label = "{}: {:.2f}%".format(CLASSES[idx],confidence * 100) + " " + str(currCounter)
+                    currEleemtn = [float(confidence), millis, startX, startY, endX, endY, (startX+endX)/2, (startY+endY)/2]
+                    #currCounter = None
+                    #cv2.imwrite(videoFileDir + "car%d_%d.jpg" %  (currCounter, counting_cars.numberBoxes(collectedDetections, currCounter)),cropped_frame )
+                    # draw the prediction on the frame
+                    label = "{}: {:.2f}%".format(CLASSES[idx],confidence * 100)# + " " + str(currCounter)
                     cv2.rectangle(frame, (startX, startY), (endX, endY),COLORS[idx], 2)
                     y = startY - 15 if startY - 15 > 15 else startY + 15
                     cv2.putText(frame, label, (startX, y),cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
@@ -143,29 +127,5 @@ else:
     temp_vs = cv2.VideoCapture(testvideoPath)
     analyze_video(temp_vs.isOpened,temp_vs, 1)
 
-json_analyse_path = "testfiles/analyse.json"
-with open(json_analyse_path, 'a') as f:
-    f.write(json.dumps(collectedDetections, separators=(',', ':')))
-
-# save collected data to csv
-output_file_path = "visualization/output.csv"
-addCounter = 0
-if not os.path.isfile(output_file_path):
-    with open(output_file_path, 'a') as f:
-        f.write("id,type,license_plate,date,time")
-        f.write('\n')
-else:
-    with open(output_file_path, 'rb') as fh:
-        for line in fh:
-            pass
-        addCounter = int(line[:line.index(",")])
-with open(output_file_path, 'a') as f:
-    for bboxes in collectedDetections:
-        last = bboxes[-1]
-        dt = datetime.datetime.fromtimestamp(last[1]/1000.0)
-        f.write(str(bboxes[0]+addCounter) + ",car,," + str(dt.date()) + "," + str(dt.time())[:5])
-        f.write('\n')
-    #webbrowser.open('file://' + os.path.realpath("visualization/index.html"), new=2)
-# do a bit of cleanup
 cv2.destroyAllWindows()
 #temp_vs.stop()
