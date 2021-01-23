@@ -86,7 +86,7 @@ def belongsToBboxes(detectedArray, bbox):
     minsim = 0
     currIndex = -1
     for index, car in enumerate(detectedArray):
-        sim = similarity(car[-1], bbox)
+        sim = spatial_similarity.similarity(car[-1], bbox)
         # print(sim)
         if sim > minsim:
             minsim = sim
@@ -97,7 +97,7 @@ def belongsToBboxes(detectedArray, bbox):
             return -1
         else:
             return currIndex
-    else: 
+    else:
         return -1
 
 def analyseTestData(detections_array, frameWidth):

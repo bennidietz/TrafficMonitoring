@@ -1,6 +1,7 @@
 # import the necessary packages
 import os, time, datetime, webbrowser, settings
 import counting_cars
+import ocr_license_plate
 from imutils.video import VideoStream
 import numpy as np
 import argparse
@@ -30,7 +31,7 @@ CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
 	"bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
 	"dog", "horse", "motorbike", "person", "pottedplant", "sheep",
 	"sofa", "train", "tvmonitor"]
-COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
+boxcolor = [255,80,180]
 
 # load our serialized model from disk
 print("[INFO] loading model...")
@@ -43,7 +44,7 @@ net = cv2.dnn.readNetFromCaffe(settings.getBaseDir() + "/models/MobileNetSSD/Mob
 
 collectedDetections = []
 
-
+videoFileDir = settings.getOutputDir() + settings.getEnding(testvideoPath) + "/"
 
 # stop_condition: determines, when the analysis is halted (eg when the videostream is over)
 # vs: the videostream (could be live from camera or from prerecorded)
@@ -55,7 +56,6 @@ def analyze_video(stop_condition,vs,frame_skip):
     # loop over the frames from the video stream
     if not os.path.isdir(settings.getOutputDir() + settings.getEnding(testvideoPath)):
         os.makedirs(settings.getOutputDir() + settings.getEnding(testvideoPath))
-    videoFileDir = settings.getOutputDir() + settings.getEnding(testvideoPath) + "/"
     while stop_condition:
         # grab the frame from the threaded video stream and resize it
         # to have a maximum width of 400 pixels
@@ -63,6 +63,9 @@ def analyze_video(stop_condition,vs,frame_skip):
         if not ret:
             print("[ERROR] There was an error reading the frame. Its value is:")
             print(frame)
+            break
+        if len(frame) == 0:
+            print("[INFO] Video finished")
             break
         if frame_counter > frame_skip - 1:
             frame = imutils.resize(frame, width=1000)
@@ -94,6 +97,10 @@ def analyze_video(stop_condition,vs,frame_skip):
                     millis = int(round(time.time() * 1000))
                     #collectedDetections.append(json.dumps([str(confidence), millis, str(startX), str(startY), str(endX), str(endY)]))
                     currCounter = None
+                    startY = max(0, startY)
+                    endY = max(0, endY)
+                    startX = max(0, startX)
+                    endX = max(0, endX)
                     cropped_frame = frame[startY:endY, startX:endX]
                     meanColor = counting_cars.calcMean(cropped_frame)
                     currEleemtn = [float(confidence), millis, startX, startY, endX, endY, (startX+endX)/2, (startY+endY)/2, meanColor]
@@ -111,14 +118,13 @@ def analyze_video(stop_condition,vs,frame_skip):
                         collectedDetections[belongingIndex].append(currEleemtn)
                         currCounter = collectedDetections[belongingIndex][0]
                         shifts = counting_cars.globalChange(collectedDetections[belongingIndex])
-                        #print(shifts)
                         cv2.imwrite(videoFileDir + "car%d_%d.jpg" %  (currCounter, counting_cars.numberBoxes(collectedDetections, currCounter)),
                             cropped_frame )
                         # draw the prediction on the frame
                         label = "{}: {:.2f}%".format(CLASSES[idx],confidence * 100) + " " + str(currCounter)
-                    cv2.rectangle(frame, (startX, startY), (endX, endY),COLORS[idx], 2)
+                    cv2.rectangle(frame, (startX, startY), (endX, endY),boxcolor, 2)
                     y = startY - 15 if startY - 15 > 15 else startY + 15
-                    cv2.putText(frame, label, (startX, y),cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
+                    cv2.putText(frame, label, (startX, y),cv2.FONT_HERSHEY_SIMPLEX, 0.5, boxcolor, 2)
                     # print("car!")
         	# show the output frame
             cv2.imshow("Frame", frame)
@@ -161,9 +167,10 @@ else:
         addCounter = int(line[:line.index(",")])
 with open(output_file_path, 'a') as f:
     for bboxes in collectedDetections:
+        license_plate = ocr_license_plate.detect_license_plate(bboxes[0], videoFileDir)
         last = bboxes[-1]
         dt = datetime.datetime.fromtimestamp(last[1]/1000.0)
-        f.write(str(bboxes[0]+addCounter) + ",car,," + str(dt.date()) + "," + str(dt.time())[:5])
+        f.write(str(bboxes[0]+addCounter) + ",car," + str(license_plate) + "," + str(dt.date()) + "," + str(dt.time())[:5])
         f.write('\n')
     #webbrowser.open('file://' + os.path.realpath("visualization/index.html"), new=2)
 # do a bit of cleanup
