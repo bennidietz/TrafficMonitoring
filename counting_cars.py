@@ -54,6 +54,10 @@ class Match:
     def numberPoints(self):
         return len(self.getLane())
 
+    def equal(self, comparedMatch):
+        return self.lIndex == comparedMatch.lIndex and \
+            self.rIndex == comparedMatch.rIndex
+
     def __str__(self):
      return "Lane " + str(self.lIndex) + " - Point " + str(self.rIndex)
 
@@ -106,25 +110,45 @@ def sameCarInRefPoint(detectedArray, bbox):
         else
             -1 is returned
     '''
-    timeDiffAcceptable = 3000
+    timeDiffAcceptable = 5000
     minsim = 0
     currIndex = -1
     for index, car in enumerate(detectedArray):
         compareRect = car.detectedBboxArr[-1]
-        sim = spatial_similarity.similarityBBoxObject(compareRect, bbox)
-        if sim > minsim and compareRect.timeDiff(bbox) < timeDiffAcceptable:
-            minsim = sim
-            currIndex = index
+        if (bbox.targetMatch and bbox.targetMatch.equal(compareRect.targetMatch)) or \
+            any(compareRect.targetMatch.equal(n) for n in bbox.matches):
+            sim = spatial_similarity.similarityBBoxObject(compareRect, bbox)
+            if sim > minsim:
+                if compareRect.timeDiff(bbox) < timeDiffAcceptable:
+                    minsim = sim
+                    currIndex = index
+                else:
+                    print(compareRect.timeDiff(bbox))
     if minsim > 0.2 and currIndex != -1:
         comparBbox = detectedArray[currIndex].detectedBboxArr[-1]
         if bbox.timeDiff(comparBbox) > timeDiffAcceptable:
             # time difference too high
-            print(bbox.timeDiff(comparBbox))
+            print("Time diff too high: " + str(bbox.timeDiff(comparBbox)))
             return -1
         else:
             return currIndex
     else:
         return -1
+
+def nextRefPointIndex(detectedArray, bbox):
+    #TODO: find out wether the current boudning box is found at the next ref point
+    # and belongs to an already detected car at the ref point before
+    if bbox.targetMatch is None or bbox.targetMatch.rIndex == 0:
+        followingRefPointMatches = list(filter(lambda n: n.rIndex > 0,bbox.matches))
+        bbox.setTargetMatch(followingRefPointMatches[0])
+    for index, car in enumerate(detectedArray):
+        lastBBoxMatch = car.detectedBboxArr[-1].targetMatch
+        if bbox.targetMatch.lIndex == lastBBoxMatch.lIndex:
+            # lane matches
+            if bbox.targetMatch.rIndex == lastBBoxMatch.rIndex + 1:
+                # ref point is the next one
+                return index
+    return -1
 
 r = Rectangle(400,200,600,400)
 print(r.containsAny())

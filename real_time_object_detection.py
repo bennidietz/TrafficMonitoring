@@ -14,7 +14,8 @@ change this path to your project directory!
 (or maybe automatically detect path somehow)
 '''
 
-testvideoPath = settings.getBaseDir() + '/testfiles/crop.mp4'
+testvideoPath = settings.getBaseDir() + '/testfiles/cropAlternativ.mp4'
+# testvideoPath = settings.getBaseDir() + '/testfiles/crop.mp4'
 # testvideoPath = settings.getBaseDir() + '/testfiles/out3.mp4'
 # testvideoPath = settings.getBaseDir() + '/testfiles/highway.mov'
 
@@ -46,11 +47,18 @@ detectedCars = []
 def on_mouse(event,x,y,flags,params):
     print(x, y)
 
-
 def createNewCar(bbox):
     firstRefPointMatches = list(filter(lambda n: n.rIndex == 0,bbox.matches))
     bbox.setTargetMatch(firstRefPointMatches[-1])
     detectedCars.append(counting_cars.DetectedCar([bbox]))
+
+def appendToDetectionNewRefPoint(index, bbox):
+    detectedCars[index].detectedBboxArr.append(bbox)
+
+def appendToDetection(index, bbox):
+    if not bbox.targetMatch:
+        bbox.setTargetMatch(detectedCars[index].detectedBboxArr[-1].targetMatch)
+    detectedCars[index].detectedBboxArr.append(bbox)
 
 # stop_condition: determines, when the analysis is halted (eg when the videostream is over)
 # vs: the videostream (could be live from camera or from prerecorded)
@@ -111,21 +119,24 @@ def analyze_video(stop_condition,vs,frame_skip):
                         index = counting_cars.sameCarInRefPoint(detectedCars, currDetectedBBox)
                         if index == -1:
                             firstRefPointMatches = list(filter(lambda n: n.rIndex == 0,currDetectedBBox.matches))
-                            lenNextRefPointMatches = len(matches) - len(firstRefPointMatches)
-                            refPoint = counting_cars.nextRefPoint(detectedCars, currDetectedBBox)
+                            followingRefPointMatches = list(filter(lambda n: n.rIndex > 0,currDetectedBBox.matches))
                             if len(firstRefPointMatches) == 0:
                                 # only points for second ref points are found -> assign it to its car group
-                                if refPoint:
+                                if (refPointIndex:= counting_cars.nextRefPointIndex(detectedCars, currDetectedBBox)) >= 0:
+                                    # is probably the following ref point
                                     #TODO: assign as 2nd ref point
-                                    pass
+                                    print(refPointIndex)
+                                    appendToDetectionNewRefPoint(refPointIndex, currDetectedBBox)
+                                # else: car was not found, so ignore the bounding box
                             elif len(firstRefPointMatches) == 1:
-                                if lenNextRefPointMatches == 0:
+                                if len(followingRefPointMatches) == 0:
                                     # only matches for 1st ref point -> create new car
                                     createNewCar(currDetectedBBox)
-                                elif refPoint:
-                                    # is probably a second ref point
+                                elif (refPointIndex:= counting_cars.nextRefPointIndex(detectedCars, currDetectedBBox)) >= 0:
+                                    # is probably the following ref point
                                     #TODO: assign as 2nd ref point
-                                    pass
+                                    print(refPointIndex)
+                                    appendToDetectionNewRefPoint(refPointIndex, currDetectedBBox)
                                 else:
                                     # only matches for 1st ref point -> create new car
                                     createNewCar(currDetectedBBox)
@@ -134,7 +145,7 @@ def analyze_video(stop_condition,vs,frame_skip):
                                 pass
                         else:
                             # append bbox to detected (already existing) car
-                            detectedCars[index].detectedBboxArr.append(currDetectedBBox)
+                            appendToDetection(index, currDetectedBBox)
                         #print(counting_cars.matchesToString(matches), millis)
                     
                     #currCounter = None
