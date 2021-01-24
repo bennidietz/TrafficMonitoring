@@ -41,9 +41,16 @@ net = cv2.dnn.readNetFromCaffe(settings.getBaseDir() + "/models/MobileNetSSD/Mob
 ##net = cv2.dnn.readNetFromCaffe(settings.getBaseDir() + "/models/googlenet_cars/MobileNetSSD_deploy.prototxt.txt",
 ##        settings.getBaseDir() + "/models/googlenet_cars/googlenet_finetune_web_car_iter_10000.caffemodel")
 
-collectedDetections = []
+detectedCars = []
+
+def on_mouse(event,x,y,flags,params):
+    print(x, y)
 
 
+def createNewCar(bbox):
+    firstRefPointMatches = list(filter(lambda n: n.rIndex == 0,bbox.matches))
+    bbox.setTargetMatch(firstRefPointMatches[-1])
+    detectedCars.append(counting_cars.DetectedCar([bbox]))
 
 # stop_condition: determines, when the analysis is halted (eg when the videostream is over)
 # vs: the videostream (could be live from camera or from prerecorded)
@@ -92,20 +99,54 @@ def analyze_video(stop_condition,vs,frame_skip):
 
                     # check if the car was already detected before
                     millis = int(round(time.time() * 1000))
-                    #collectedDetections.append(json.dumps([str(confidence), millis, str(startX), str(startY), str(endX), str(endY)]))
+                    #detectedCars.append(json.dumps([str(confidence), millis, str(startX), str(startY), str(endX), str(endY)]))
                     
                     cropped_frame = frame[startY:endY, startX:endX]
-                    currEleemtn = [float(confidence), millis, startX, startY, endX, endY, (startX+endX)/2, (startY+endY)/2]
+                    bbox = counting_cars.Rectangle(startX, startY, endX, endY)
+                    matches = bbox.containsAny()
+                    currDetectedBBox = counting_cars.DetectedBbox(float(confidence), millis, bbox, matches)
+                    if len(matches) > 0:
+                        if len(matches) == 1:
+                            currDetectedBBox.setTargetMatch(matches[-1]) # case of only one match found
+                        index = counting_cars.sameCarInRefPoint(detectedCars, currDetectedBBox)
+                        if index == -1:
+                            firstRefPointMatches = list(filter(lambda n: n.rIndex == 0,currDetectedBBox.matches))
+                            lenNextRefPointMatches = len(matches) - len(firstRefPointMatches)
+                            refPoint = counting_cars.nextRefPoint(detectedCars, currDetectedBBox)
+                            if len(firstRefPointMatches) == 0:
+                                # only points for second ref points are found -> assign it to its car group
+                                if refPoint:
+                                    #TODO: assign as 2nd ref point
+                                    pass
+                            elif len(firstRefPointMatches) == 1:
+                                if lenNextRefPointMatches == 0:
+                                    # only matches for 1st ref point -> create new car
+                                    createNewCar(currDetectedBBox)
+                                elif refPoint:
+                                    # is probably a second ref point
+                                    #TODO: assign as 2nd ref point
+                                    pass
+                                else:
+                                    # only matches for 1st ref point -> create new car
+                                    createNewCar(currDetectedBBox)
+                            else:
+                                # scenario: mutliple matches for first point -> ignore detection
+                                pass
+                        else:
+                            # append bbox to detected (already existing) car
+                            detectedCars[index].detectedBboxArr.append(currDetectedBBox)
+                        #print(counting_cars.matchesToString(matches), millis)
+                    
                     #currCounter = None
-                    #cv2.imwrite(videoFileDir + "car%d_%d.jpg" %  (currCounter, counting_cars.numberBoxes(collectedDetections, currCounter)),cropped_frame )
-                    # draw the prediction on the frame
+                    #cv2.imwrite(videoFileDir + "car%d_%d.jpg" %  (currCounter, counting_cars.numberBoxes(detectedCars, currCounter)),cropped_frame )
+                    # draw the
                     label = "{}: {:.2f}%".format(CLASSES[idx],confidence * 100)# + " " + str(currCounter)
                     cv2.rectangle(frame, (startX, startY), (endX, endY),COLORS[idx], 2)
                     y = startY - 15 if startY - 15 > 15 else startY + 15
                     cv2.putText(frame, label, (startX, y),cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
-                    # print("car!")
         	# show the output frame
             cv2.imshow("Frame", frame)
+            #cv2.setMouseCallback('Frame', on_mouse)
             frame_counter = 0
             continue
         frame_counter += 1
