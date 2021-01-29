@@ -4,7 +4,7 @@ from testdata import shortTestDetection
 
 basePath = os.path.dirname(os.path.realpath(__file__))
 
-timeDiffAcceptable = 30000
+timeDiffAcceptable = 5000
 
 class Detection:
     def __init__(self, confidence, milliseconds, bbox):
@@ -88,6 +88,49 @@ def belongsToBboxes(detectedArray, bbox):
     for index, car in enumerate(detectedArray):
         sim = spatial_similarity.similarity(car[-1], bbox)
         # print(sim)
+        if sim > minsim and bbox[1]-car[-1][1] < timeDiffAcceptable:
+            minsim = sim
+            currIndex = index
+    if minsim > 0.2 and currIndex != -1:
+        spatial_similarity.trial(currIndex, detectedArray[currIndex][-1], bbox)
+        if bbox[1]-detectedArray[currIndex][-1][1] > timeDiffAcceptable:
+            # time difference too high
+            print(bbox[1]-detectedArray[currIndex][-1][1])
+            return -1
+        else:
+            '''if len(detectedArray[currIndex]) > 2:
+                print("hier")
+                shifts = getPath(detectedArray[currIndex])
+                print(shifts)'''
+            sim = simMean(detectedArray[currIndex][-1], bbox)
+            if sim < 0.75:
+                print(sim)
+            return currIndex
+    else:
+        if currIndex != -1:
+            colorSim = simMean(detectedArray[currIndex][-1], bbox)
+            if colorSim > 0.83 and bbox[1]-detectedArray[currIndex][-1][1] < timeDiffAcceptable:
+                print(globalChange(detectedArray[currIndex]))
+                print(bbox)
+                print(colorSim)
+                print(minsim)
+                print(bbox[1]-detectedArray[currIndex][-1][1])
+                #return currIndex
+            
+        return -1
+
+def debug(detectedArray, bbox):
+    '''
+        if the bbox belongs to other bboxes (seems to be of the same car),
+            the index is given back
+        else
+            -1 is returned
+    '''
+    minsim = 0
+    currIndex = -1
+    for index, car in enumerate(detectedArray):
+        sim = spatial_similarity.similarity(car[-1], bbox)
+        # print(sim)
         if sim > minsim:
             minsim = sim
             currIndex = index
@@ -119,7 +162,7 @@ def numberBoxes(array, counter):
         if counter == i[0] and len(i) >= 2:
             return len(i)-1
 
-with open('testfiles/before.json', 'w') as f:
+'''with open('testfiles/before.json', 'w') as f:
     json.dump(shortTestDetection, f)
 with open('testfiles/after.json', 'w') as f:
-    json.dump(analyseTestData(shortTestDetection, 1000), f)
+    json.dump(analyseTestData(shortTestDetection, 1000), f)'''

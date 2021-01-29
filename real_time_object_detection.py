@@ -103,10 +103,10 @@ def analyze_video(stop_condition,vs,frame_skip):
                     endX = max(0, endX)
                     cropped_frame = frame[startY:endY, startX:endX]
                     meanColor = counting_cars.calcMean(cropped_frame)
-                    currEleemtn = [float(confidence), millis, startX, startY, endX, endY, (startX+endX)/2, (startY+endY)/2, meanColor]
-                    belongingIndex = counting_cars.belongsToBboxes(collectedDetections, currEleemtn)
+                    currElement = [float(confidence), millis, startX, startY, endX, endY, (startX+endX)/2, (startY+endY)/2, meanColor]
+                    belongingIndex = counting_cars.belongsToBboxes(collectedDetections, currElement)
                     if belongingIndex == -1:
-                        collectedDetections.append([counter, currEleemtn])
+                        collectedDetections.append([counter, currElement])
                         print("Car " + str(counter) + " detected...")
                         # draw the prediction on the frame
                         label = "{}: {:.2f}%".format(CLASSES[idx],confidence * 100) + " " + str(counter)
@@ -115,14 +115,14 @@ def analyze_video(stop_condition,vs,frame_skip):
                         counter = counter + 1
                         currCounter = counter
                     else:
-                        collectedDetections[belongingIndex].append(currEleemtn)
+                        collectedDetections[belongingIndex].append(currElement)
                         currCounter = collectedDetections[belongingIndex][0]
                         shifts = counting_cars.globalChange(collectedDetections[belongingIndex])
                         cv2.imwrite(videoFileDir + "car%d_%d.jpg" %  (currCounter, counting_cars.numberBoxes(collectedDetections, currCounter)),
                             cropped_frame )
                         # draw the prediction on the frame
                         label = "{}: {:.2f}%".format(CLASSES[idx],confidence * 100) + " " + str(currCounter)
-                    cv2.rectangle(frame, (startX, startY), (endX, endY),boxcolor, 2)
+                    cv2.rectangle(frame, (startX, startY), (endX, endY),COLORS[idx], 2)
                     y = startY - 15 if startY - 15 > 15 else startY + 15
                     cv2.putText(frame, label, (startX, y),cv2.FONT_HERSHEY_SIMPLEX, 0.5, boxcolor, 2)
                     # print("car!")
@@ -174,5 +174,7 @@ with open(output_file_path, 'a') as f:
         f.write('\n')
     #webbrowser.open('file://' + os.path.realpath("visualization/index.html"), new=2)
 # do a bit of cleanup
+for index, i in enumerate(collectedDetections):
+    print("Car " + str(index) + ": " + str(counting_cars.globalChange(i)))
 cv2.destroyAllWindows()
 #temp_vs.stop()
