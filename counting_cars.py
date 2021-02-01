@@ -29,16 +29,44 @@ class Point:
         self.X = X
         self.Y = Y
 
-laneAPoint1 = Point(799, 305)
+class Lane:
+    def __init__(self, index, points):
+        self.index = index
+        self.points = points
+        self.counter = 0
+
+    def onCarDetected(self):
+        self.counter += 1
+
+
+# for curve video
+'''laneAPoint1 = Point(799, 305)
 laneAPoint12 = Point(583, 298)
 laneAPoint2 = Point(449, 278)
 
 laneBPoint1 = Point(204, 267)
 laneBPoint2 = Point(670, 377)
+'''
+
+# for roundabouts video
+'''laneAPoint1 = Point(760, 350)
+laneAPoint2 = Point(696, 308)
+
+laneBPoint1 = Point(295, 307)
+laneBPoint2 = Point(215, 386)'''
+laneAPoint1 = Point(344, 259)
+laneAPoint2 = Point(170, 425)
+
+laneBPoint1 = Point(799, 408)
+laneBPoint2 = Point(673, 279)
+
+lane1 = Lane(1, [laneAPoint1, laneAPoint2])
+lane2 = Lane(2, [laneBPoint1, laneBPoint2])
+allLanes = [lane1, lane2]
 
 laneA = [laneAPoint1, laneAPoint2]
 laneB = [laneBPoint1, laneBPoint2]
-allLanes = [laneA, laneB]
+allLanes2 = [laneA, laneB]
 
 class Match:
     def __init__(self, lIndex, rIndex):
@@ -49,10 +77,10 @@ class Match:
         return allLanes[self.lIndex]
 
     def getPoint(self):
-        return self.getLane()[self.rIndex]
+        return self.getLane().points[self.rIndex]
 
     def numberPoints(self):
-        return len(self.getLane())
+        return len(self.getLane().points)
 
     def equal(self, comparedMatch):
         return self.lIndex == comparedMatch.lIndex and \
@@ -75,7 +103,7 @@ class Rectangle:
     def containsAny(self):
         results = [] 
         for lIndex, lane in enumerate(allLanes):
-            for rIndex, refPoint in enumerate(lane):
+            for rIndex, refPoint in enumerate(lane.points):
                 if (self.contains(refPoint)):
                     results.append(Match(lIndex, rIndex))
         return results
@@ -123,7 +151,8 @@ def sameCarInRefPoint(detectedArray, bbox):
                     minsim = sim
                     currIndex = index
                 else:
-                    print(compareRect.timeDiff(bbox))
+                    #print(compareRect.timeDiff(bbox))
+                    pass
     if minsim > 0.2 and currIndex != -1:
         comparBbox = detectedArray[currIndex].detectedBboxArr[-1]
         if bbox.timeDiff(comparBbox) > timeDiffAcceptable:

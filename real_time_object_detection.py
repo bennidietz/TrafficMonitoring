@@ -14,9 +14,9 @@ change this path to your project directory!
 (or maybe automatically detect path somehow)
 '''
 
-testvideoPath = settings.getBaseDir() + '/testfiles/cropAlternativ.mp4'
-# testvideoPath = settings.getBaseDir() + '/testfiles/crop.mp4'
-# testvideoPath = settings.getBaseDir() + '/testfiles/out3.mp4'
+# testvideoPath = settings.getBaseDir() + '/testfiles/cropAlternativ.mp4'
+testvideoPath = settings.getBaseDir() + '/testfiles/crop8.mp4'
+#testvideoPath = settings.getBaseDir() + '/testfiles/out8.mp4'
 # testvideoPath = settings.getBaseDir() + '/testfiles/highway.mov'
 
 # construct the argument parse and parse the arguments
@@ -52,8 +52,15 @@ def createNewCar(bbox):
     bbox.setTargetMatch(firstRefPointMatches[-1])
     detectedCars.append(counting_cars.DetectedCar([bbox]))
 
-def appendToDetectionNewRefPoint(index, bbox):
+def appendToDetectionNewRefPoint(frame, index, bbox):
     detectedCars[index].detectedBboxArr.append(bbox)
+    bbox.matches[-1].getLane().onCarDetected()
+    lane = bbox.matches[-1].getLane()
+    print("Lane " + str(lane.index) + ": Car " + str(lane.counter) + " detected")
+    color = [255,  0 , 0]
+    #cv2.putText(frame, str(lane.counter), (673, 279),cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+    pass
+
 
 def appendToDetection(index, bbox):
     if not bbox.targetMatch:
@@ -90,6 +97,7 @@ def analyze_video(stop_condition,vs,frame_skip):
             net.setInput(blob)
             detections = net.forward()
             # loop over the detections
+            newCar = False
             for i in np.arange(0, detections.shape[2]):
                 # extract the confidence (i.e., probability) associated with
                 # the prediction
@@ -125,8 +133,8 @@ def analyze_video(stop_condition,vs,frame_skip):
                                 if (refPointIndex:= counting_cars.nextRefPointIndex(detectedCars, currDetectedBBox)) >= 0:
                                     # is probably the following ref point
                                     #TODO: assign as 2nd ref point
-                                    print(refPointIndex)
-                                    appendToDetectionNewRefPoint(refPointIndex, currDetectedBBox)
+                                    appendToDetectionNewRefPoint(frame, refPointIndex, currDetectedBBox)
+                                    newCar = True
                                 # else: car was not found, so ignore the bounding box
                             elif len(firstRefPointMatches) == 1:
                                 if len(followingRefPointMatches) == 0:
@@ -135,8 +143,8 @@ def analyze_video(stop_condition,vs,frame_skip):
                                 elif (refPointIndex:= counting_cars.nextRefPointIndex(detectedCars, currDetectedBBox)) >= 0:
                                     # is probably the following ref point
                                     #TODO: assign as 2nd ref point
-                                    print(refPointIndex)
-                                    appendToDetectionNewRefPoint(refPointIndex, currDetectedBBox)
+                                    appendToDetectionNewRefPoint(frame, refPointIndex, currDetectedBBox)
+                                    newCar = True
                                 else:
                                     # only matches for 1st ref point -> create new car
                                     createNewCar(currDetectedBBox)
