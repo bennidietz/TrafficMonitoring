@@ -15,7 +15,7 @@ change this path to your project directory!
 '''
 
 # testvideoPath = settings.getBaseDir() + '/testfiles/cropAlternativ.mp4'
-testvideoPath = settings.getBaseDir() + '/testfiles/crop8.mp4'
+testvideoPath = settings.getBaseDir() + '/testfiles/out13.mp4'
 #testvideoPath = settings.getBaseDir() + '/testfiles/out8.mp4'
 # testvideoPath = settings.getBaseDir() + '/testfiles/highway.mov'
 
@@ -116,7 +116,7 @@ def analyze_video(stop_condition,vs,frame_skip):
                     # check if the car was already detected before
                     millis = int(round(time.time() * 1000))
                     #detectedCars.append(json.dumps([str(confidence), millis, str(startX), str(startY), str(endX), str(endY)]))
-                    
+
                     cropped_frame = frame[startY:endY, startX:endX]
                     bbox = counting_cars.Rectangle(startX, startY, endX, endY)
                     matches = bbox.containsAny()
@@ -128,6 +128,7 @@ def analyze_video(stop_condition,vs,frame_skip):
                         if index == -1:
                             firstRefPointMatches = list(filter(lambda n: n.rIndex == 0,currDetectedBBox.matches))
                             followingRefPointMatches = list(filter(lambda n: n.rIndex > 0,currDetectedBBox.matches))
+                            print(firstRefPointMatches)
                             if len(firstRefPointMatches) == 0:
                                 # only points for second ref points are found -> assign it to its car group
                                 if (refPointIndex:= counting_cars.nextRefPointIndex(detectedCars, currDetectedBBox)) >= 0:
@@ -155,7 +156,7 @@ def analyze_video(stop_condition,vs,frame_skip):
                             # append bbox to detected (already existing) car
                             appendToDetection(index, currDetectedBBox)
                         #print(counting_cars.matchesToString(matches), millis)
-                    
+
                     #currCounter = None
                     #cv2.imwrite(videoFileDir + "car%d_%d.jpg" %  (currCounter, counting_cars.numberBoxes(detectedCars, currCounter)),cropped_frame )
                     # draw the
@@ -180,11 +181,13 @@ if live:
     # initialize the video stream, allow the cammera sensor to warmup
     print("[INFO] starting video stream...")
     temp_vs = VideoStream(src=0).start()
+    counting_cars.configure_refPoints(temp_vs)
     analyze_video(True,temp_vs, 0)
     time.sleep(2.0)
 else:
     print("[INFO] starting prerecorded video...")
     temp_vs = cv2.VideoCapture(testvideoPath)
+    counting_cars.configure_refPoints(temp_vs)
     analyze_video(temp_vs.isOpened,temp_vs, 1)
 
 cv2.destroyAllWindows()
