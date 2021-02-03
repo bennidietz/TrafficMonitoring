@@ -15,7 +15,7 @@ change this path to your project directory!
 '''
 
 # testvideoPath = settings.getBaseDir() + '/testfiles/cropAlternativ.mp4'
-testvideoPath = settings.getBaseDir() + '/testfiles/out13.mp4'
+
 #testvideoPath = settings.getBaseDir() + '/testfiles/out8.mp4'
 # testvideoPath = settings.getBaseDir() + '/testfiles/highway.mov'
 
@@ -23,6 +23,12 @@ testvideoPath = settings.getBaseDir() + '/testfiles/out13.mp4'
 ap = argparse.ArgumentParser()
 ap.add_argument("-c", "--confidence", type=float, default=0.47,
 	help="minimum probability to filter weak detections")
+ap.add_argument("-f", "--fromfile", type=str, default='/testfiles/out13.mp4',
+	help="give relative path to prerecorded")
+ap.add_argument("-p", "--lanepoints", type=int, default=2, metavar="[1-2]",
+	help="number of necessary lane points")
+ap.add_argument("-l", "--lanes", type=int, default=2, metavar="[1-10]",
+	help="number of lanes")
 args = vars(ap.parse_args())
 
 # initialize the list of class labels MobileNet SSD was trained to
@@ -175,19 +181,19 @@ def analyze_video(stop_condition,vs,frame_skip):
         if key == ord("q"):
             break
 
-# true when using connected camera, false when using prerecorded mp4
-live = False
-if live:
+if args["fromfile"] == "":
     # initialize the video stream, allow the cammera sensor to warmup
     print("[INFO] starting video stream...")
+    testvideoPath = settings.getBaseDir() + ''
     temp_vs = VideoStream(src=0).start()
-    counting_cars.configure_refPoints(temp_vs)
+    counting_cars.configure_refPoints(temp_vs, args["lanes"], args["lanepoints"])
     analyze_video(True,temp_vs, 0)
     time.sleep(2.0)
 else:
     print("[INFO] starting prerecorded video...")
+    testvideoPath = settings.getBaseDir() + args["fromfile"]
     temp_vs = cv2.VideoCapture(testvideoPath)
-    counting_cars.configure_refPoints(temp_vs)
+    counting_cars.configure_refPoints(temp_vs, args["lanes"], args["lanepoints"])
     analyze_video(temp_vs.isOpened,temp_vs, 1)
 
 cv2.destroyAllWindows()

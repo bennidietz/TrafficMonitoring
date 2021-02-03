@@ -70,7 +70,7 @@ laneBPoint2 = Point(673, 279)
 
 lane1 = Lane(1, [laneAPoint1, laneAPoint2])
 lane2 = Lane(2, [laneBPoint1, laneBPoint2])
-allLanes = [lane1, lane2]
+allLanes = []
 
 laneA = [laneAPoint1, laneAPoint2]
 laneB = [laneBPoint1, laneBPoint2]
@@ -194,7 +194,7 @@ def on_mouse(event,x,y,flags,params):
         print("[INFO] registered:", x, y)
         keyboard.press('a')
 
-def configure_refPoints(vs):
+def configure_refPoints(vs, lanes, points):
     print("[INFO] setting the lanes")
     ret, frame = vs.read()
     if not ret:
@@ -208,37 +208,22 @@ def configure_refPoints(vs):
         thickness = 2
         
         frame = imutils.resize(frame, width=1000)
-        # setting point 1 lane 1
-        copy = frame.copy()
-        cv2.putText(copy, 'click point 1 of lane 1', (350, 30), font,  
-                   fontScale, color, thickness, cv2.LINE_AA) 
-        cv2.imshow("Frame", copy)
-        cv2.setMouseCallback('Frame', on_mouse)
-        key = cv2.waitKey(0) & 0xFF
+        for idx in range(lanes):
+            global clickedPts
+            
+            for idy in range(points):
+                # setting point 1 lane 1
+                copy = frame.copy()
+                cv2.putText(copy, 'click point ' + str(idy+1) + ' of lane ' + str(idx+1), (350, 30), font,  
+                           fontScale, color, thickness, cv2.LINE_AA) 
+                cv2.imshow("Frame", copy)
+                cv2.setMouseCallback('Frame', on_mouse)
+                key = cv2.waitKey(0) & 0xFF
+                
+            allLanes.append(Lane(idx+1, clickedPts))
+            clickedPts = []
         
-        # setting point 2 lane 1
-        copy = frame.copy()
-        cv2.putText(copy, 'click point 2 of lane 1', (350, 30), font,  
-                   fontScale, color, thickness, cv2.LINE_AA) 
-        cv2.imshow("Frame", copy)
-        key = cv2.waitKey(0) & 0xFF
         
-        # setting point 1 lane 2
-        copy = frame.copy()
-        cv2.putText(copy, 'click point 1 of lane 2', (350, 30), font,  
-                   fontScale, color, thickness, cv2.LINE_AA) 
-        cv2.imshow("Frame", copy)
-        key = cv2.waitKey(0) & 0xFF
-        
-        # setting point 2 lane 2
-        copy = frame.copy()
-        cv2.putText(copy, 'click point 2 of lane 2', (350, 30), font,  
-                   fontScale, color, thickness, cv2.LINE_AA) 
-        cv2.imshow("Frame", copy)
-        key = cv2.waitKey(0) & 0xFF
-        
-        allLanes[0].setPoints(clickedPts[0], clickedPts[1])
-        allLanes[1].setPoints(clickedPts[2], clickedPts[3])
         cv2.setMouseCallback('Frame', lambda *args : None)
         
 
