@@ -81,17 +81,25 @@ def analyze_video(stop_condition,vs,frame_skip):
     # counts the frames
     frame_counter = 0
     # loop over the frames from the video stream
-    if not os.path.isdir(settings.getOutputDir() + settings.getEnding(testvideoPath)):
-        os.makedirs(settings.getOutputDir() + settings.getEnding(testvideoPath))
-    videoFileDir = settings.getOutputDir() + settings.getEnding(testvideoPath) + "/"
+    if live:
+        ending = "live"
+    else:
+        ending = settings.getEnding(testvideoPath)
+    if not os.path.isdir(settings.getOutputDir() + ending):
+        os.makedirs(settings.getOutputDir() + ending)
+    videoFileDir = settings.getOutputDir() + ending + "/"
     while stop_condition:
         # grab the frame from the threaded video stream and resize it
         # to have a maximum width of 400 pixels
-        ret, frame = vs.read()
-        if not ret:
-            print("[ERROR] There was an error reading the frame. Its value is:")
-            print(frame)
-            break
+        if live:
+            print("frame")
+            frame = vs.read()
+        else:
+	        ret, frame = vs.read()
+	        if not ret:
+	            print("[ERROR] There was an error reading the frame. Its value is:")
+	            print(frame)
+	            break
         if frame_counter > frame_skip - 1:
             frame = imutils.resize(frame, width=1000)
             # grab the frame dimensions and convert it to a blob
@@ -180,20 +188,20 @@ def analyze_video(stop_condition,vs,frame_skip):
         # if the `q` key was pressed, break from the loop
         if key == ord("q"):
             break
-
-if args["fromfile"] == "":
+live = args["fromfile"] == ""
+if live:
     # initialize the video stream, allow the cammera sensor to warmup
     print("[INFO] starting video stream...")
     testvideoPath = settings.getBaseDir() + ''
     temp_vs = VideoStream(src=0).start()
-    counting_cars.configure_refPoints(temp_vs, args["lanes"], args["lanepoints"])
+    counting_cars.configure_refPoints(temp_vs, args["lanes"], args["lanepoints"], live)
     analyze_video(True,temp_vs, 0)
     time.sleep(2.0)
 else:
     print("[INFO] starting prerecorded video...")
     testvideoPath = settings.getBaseDir() + args["fromfile"]
     temp_vs = cv2.VideoCapture(testvideoPath)
-    counting_cars.configure_refPoints(temp_vs, args["lanes"], args["lanepoints"])
+    counting_cars.configure_refPoints(temp_vs, args["lanes"], args["lanepoints"], live)
     analyze_video(temp_vs.isOpened,temp_vs, 1)
 
 cv2.destroyAllWindows()
