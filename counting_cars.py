@@ -1,7 +1,12 @@
 import os, json
 import itertools, math
 import spatial_similarity
+import imutils
+import cv2
+from pynput.keyboard import Key, Controller
+import numpy as np
 
+keyboard = Controller()
 basePath = os.path.dirname(os.path.realpath(__file__))
 
 class DetectedCar:
@@ -37,6 +42,9 @@ class Lane:
 
     def onCarDetected(self):
         self.counter += 1
+    
+    def setPoints(self,lanePoint1,lanePoint2):
+        self.points = [lanePoint1,lanePoint2]
 
 
 # for curve video
@@ -62,7 +70,7 @@ laneBPoint2 = Point(673, 279)
 
 lane1 = Lane(1, [laneAPoint1, laneAPoint2])
 lane2 = Lane(2, [laneBPoint1, laneBPoint2])
-allLanes = [lane1, lane2]
+allLanes = []
 
 laneA = [laneAPoint1, laneAPoint2]
 laneB = [laneBPoint1, laneBPoint2]
@@ -99,9 +107,9 @@ class Rectangle:
     def contains(self, point):
         return point.X >= self.startX and point.X <= self.endX and \
             point.Y >= self.startY and point.Y <= self.endY
-    
+
     def containsAny(self):
-        results = [] 
+        results = []
         for lIndex, lane in enumerate(allLanes):
             for rIndex, refPoint in enumerate(lane.points):
                 if (self.contains(refPoint)):
@@ -178,6 +186,46 @@ def nextRefPointIndex(detectedArray, bbox):
                 # ref point is the next one
                 return index
     return -1
+
+clickedPts = []
+def on_mouse(event,x,y,flags,params):
+    if event==cv2.EVENT_LBUTTONDOWN:
+        clickedPts.append(Point(x,y))
+        print("[INFO] registered:", x, y)
+        keyboard.press('a')
+
+def configure_refPoints(vs, lanes, points):
+    print("[INFO] setting the lanes")
+    ret, frame = vs.read()
+    if not ret:
+        print("[ERROR] There was an error reading the frame. Its value is:")
+        print(frame)
+        exit()
+    else:
+        font = cv2.FONT_HERSHEY_SIMPLEX 
+        fontScale = 0.8
+        color = (0, 0, 255) 
+        thickness = 2
+        
+        frame = imutils.resize(frame, width=1000)
+        for idx in range(lanes):
+            global clickedPts
+            
+            for idy in range(points):
+                # setting point 1 lane 1
+                copy = frame.copy()
+                cv2.putText(copy, 'click point ' + str(idy+1) + ' of lane ' + str(idx+1), (350, 30), font,  
+                           fontScale, color, thickness, cv2.LINE_AA) 
+                cv2.imshow("Frame", copy)
+                cv2.setMouseCallback('Frame', on_mouse)
+                key = cv2.waitKey(0) & 0xFF
+                
+            allLanes.append(Lane(idx+1, clickedPts))
+            clickedPts = []
+        
+        
+        cv2.setMouseCallback('Frame', lambda *args : None)
+        
 
 r = Rectangle(400,200,600,400)
 print(r.containsAny())
