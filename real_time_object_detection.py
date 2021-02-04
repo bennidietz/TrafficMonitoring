@@ -1,6 +1,7 @@
 # import the necessary packages
 import os, time, datetime, webbrowser, settings
 import counting_cars
+import ocr_license_plate
 from imutils.video import VideoStream
 import numpy as np
 import argparse
@@ -48,7 +49,6 @@ net = cv2.dnn.readNetFromCaffe(settings.getBaseDir() + "/models/MobileNetSSD/Mob
 ##net = cv2.dnn.readNetFromCaffe(settings.getBaseDir() + "/models/googlenet_cars/MobileNetSSD_deploy.prototxt.txt",
 ##        settings.getBaseDir() + "/models/googlenet_cars/googlenet_finetune_web_car_iter_10000.caffemodel")
 
-detectedCars = []
 
 def on_mouse(event,x,y,flags,params):
     print(x, y)
@@ -58,13 +58,25 @@ def createNewCar(bbox):
     bbox.setTargetMatch(firstRefPointMatches[-1])
     detectedCars.append(counting_cars.DetectedCar([bbox]))
 
-def appendToDetectionNewRefPoint(frame, index, bbox):
+def cropCar(frame, bbox):
+    (startX, startY, endX, endY) = bbox.astype("int")
+    startY = max(0, startY)
+    endY = max(0, endY)
+    startX = max(0, startX)
+    endX = max(0, endX)
+    return frame[startY:endY, startX:endX]
+
+def appendToDetectionNewRefPoint(frame, index, bbox, videoFileDir, box, currElement):
     detectedCars[index].detectedBboxArr.append(bbox)
     bbox.matches[-1].getLane().onCarDetected()
     lane = bbox.matches[-1].getLane()
     print("Lane " + str(lane.index) + ": Car " + str(lane.counter) + " detected")
     color = [255,  0 , 0]
     #cv2.putText(frame, str(lane.counter), (673, 279),cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+    print(videoFileDir + "lane%d_car%d.jpg" %  (lane.index, lane.counter))
+    cv2.imwrite(videoFileDir + "lane%d_car%d.jpg" %  (lane.index, lane.counter),
+                            cropCar(frame, box) )
+    collectedDetections.append([lane.index,lane.counter, currElement])
     pass
 
 
@@ -72,6 +84,8 @@ def appendToDetection(index, bbox):
     if not bbox.targetMatch:
         bbox.setTargetMatch(detectedCars[index].detectedBboxArr[-1].targetMatch)
     detectedCars[index].detectedBboxArr.append(bbox)
+
+collectedDetections = []
 
 # stop_condition: determines, when the analysis is halted (eg when the videostream is over)
 # vs: the videostream (could be live from camera or from prerecorded)
@@ -81,13 +95,6 @@ def analyze_video(stop_condition,vs,frame_skip):
     # counts the frames
     frame_counter = 0
     # loop over the frames from the video stream
-    if live:
-        ending = "live"
-    else:
-        ending = settings.getEnding(testvideoPath)
-    if not os.path.isdir(settings.getOutputDir() + ending):
-        os.makedirs(settings.getOutputDir() + ending)
-    videoFileDir = settings.getOutputDir() + ending + "/"
     while stop_condition:
         # grab the frame from the threaded video stream and resize it
         # to have a maximum width of 400 pixels
@@ -120,7 +127,7 @@ def analyze_video(stop_condition,vs,frame_skip):
                 name = CLASSES[idx]
                 # filter out weak detections by ensuring the `confidence` is
                 # greater than the minimum confidence
-                if name == "car" and confidence > args["confidence"]:
+                if (name == "car" or name == "bus") and confidence > args["confidence"]:
                     # extract the index of the class label from the
                     # `detections`, then compute the (x, y)-coordinates of
                     # the bounding box for the object
@@ -142,13 +149,14 @@ def analyze_video(stop_condition,vs,frame_skip):
                         if index == -1:
                             firstRefPointMatches = list(filter(lambda n: n.rIndex == 0,currDetectedBBox.matches))
                             followingRefPointMatches = list(filter(lambda n: n.rIndex > 0,currDetectedBBox.matches))
-                            print(firstRefPointMatches)
                             if len(firstRefPointMatches) == 0:
                                 # only points for second ref points are found -> assign it to its car group
                                 if (refPointIndex:= counting_cars.nextRefPointIndex(detectedCars, currDetectedBBox)) >= 0:
                                     # is probably the following ref point
                                     #TODO: assign as 2nd ref point
-                                    appendToDetectionNewRefPoint(frame, refPointIndex, currDetectedBBox)
+                                    millis = int(round(time.time() * 1000))
+                                    currElement = [float(confidence), millis, startX, startY, endX, endY, (startX+endX)/2, (startY+endY)/2]
+                                    appendToDetectionNewRefPoint(frame, refPointIndex, currDetectedBBox, videoFileDir, box, currElement)
                                     newCar = True
                                 # else: car was not found, so ignore the bounding box
                             elif len(firstRefPointMatches) == 1:
@@ -158,7 +166,9 @@ def analyze_video(stop_condition,vs,frame_skip):
                                 elif (refPointIndex:= counting_cars.nextRefPointIndex(detectedCars, currDetectedBBox)) >= 0:
                                     # is probably the following ref point
                                     #TODO: assign as 2nd ref point
-                                    appendToDetectionNewRefPoint(frame, refPointIndex, currDetectedBBox)
+                                    millis = int(round(time.time() * 1000))
+                                    currElement = [float(confidence), millis, startX, startY, endX, endY, (startX+endX)/2, (startY+endY)/2]
+                                    appendToDetectionNewRefPoint(frame, refPointIndex, currDetectedBBox, videoFileDir, box, currElement)
                                     newCar = True
                                 else:
                                     # only matches for 1st ref point -> create new car
@@ -188,7 +198,18 @@ def analyze_video(stop_condition,vs,frame_skip):
         # if the `q` key was pressed, break from the loop
         if key == ord("q"):
             break
+
+detectedCars = []
 live = args["fromfile"] == ""
+testvideoPath = settings.getBaseDir() + args["fromfile"]
+if live:
+    ending = "live"
+else:
+    ending = settings.getEnding(testvideoPath)
+if not os.path.isdir(settings.getOutputDir() + ending):
+    os.makedirs(settings.getOutputDir() + ending)
+videoFileDir = settings.getOutputDir() + ending + "/"
+
 if live:
     # initialize the video stream, allow the cammera sensor to warmup
     print("[INFO] starting video stream...")
@@ -199,10 +220,29 @@ if live:
     time.sleep(2.0)
 else:
     print("[INFO] starting prerecorded video...")
-    testvideoPath = settings.getBaseDir() + args["fromfile"]
     temp_vs = cv2.VideoCapture(testvideoPath)
     counting_cars.configure_refPoints(temp_vs, args["lanes"], args["lanepoints"], live)
     analyze_video(temp_vs.isOpened,temp_vs, 1)
+
+# save collected data to csv
+output_file_path = "visualization/output.csv"
+addCounter = 0
+if not os.path.isfile(output_file_path):
+    with open(output_file_path, 'a') as f:
+        f.write("id,type,license_plate,date,time")
+        f.write('\n')
+else:
+    with open(output_file_path, 'rb') as fh:
+        for line in fh:
+            pass
+        addCounter = int(line[0:1])
+with open(output_file_path, 'a') as f:
+    for bboxes in collectedDetections:
+        license_plate = ocr_license_plate.detect_license_plate(bboxes[0], videoFileDir)
+        last = bboxes[-1]
+        dt = datetime.datetime.fromtimestamp(last[1]/1000.0)
+        f.write(str(bboxes[0]+addCounter) + ",car," + str(license_plate) + "," + str(dt.date()) + "," + str(dt.time())[:5])
+        f.write('\n')
 
 cv2.destroyAllWindows()
 #temp_vs.stop()
