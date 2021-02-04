@@ -42,7 +42,7 @@ class Lane:
 
     def onCarDetected(self):
         self.counter += 1
-    
+
     def setPoints(self,lanePoint1,lanePoint2):
         self.points = [lanePoint1,lanePoint2]
 
@@ -202,30 +202,33 @@ def configure_refPoints(vs, lanes, points):
         print(frame)
         exit()
     else:
-        font = cv2.FONT_HERSHEY_SIMPLEX 
+        font = cv2.FONT_HERSHEY_SIMPLEX
         fontScale = 0.8
-        color = (0, 0, 255) 
+        color = (0, 0, 255)
         thickness = 2
-        
+
         frame = imutils.resize(frame, width=1000)
         for idx in range(lanes):
             global clickedPts
-            
+
             for idy in range(points):
                 # setting point 1 lane 1
                 copy = frame.copy()
-                cv2.putText(copy, 'click point ' + str(idy+1) + ' of lane ' + str(idx+1), (350, 30), font,  
-                           fontScale, color, thickness, cv2.LINE_AA) 
+                cv2.putText(copy, 'click point ' + str(idy+1) + ' of lane ' + str(idx+1), (350, 30), font,
+                           fontScale, color, thickness, cv2.LINE_AA)
                 cv2.imshow("Frame", copy)
                 cv2.setMouseCallback('Frame', on_mouse)
                 key = cv2.waitKey(0) & 0xFF
-                
-            allLanes.append(Lane(idx+1, clickedPts))
+
+            if len(clickedPts) == 2:
+                allLanes.append(Lane(idx+1, clickedPts))
+            else:
+                allLanes.append(Lane(idx+1, [clickedPts[0], clickedPts[0]]))
             clickedPts = []
-        
-        
+
+
         cv2.setMouseCallback('Frame', lambda *args : None)
-        
+
 
 r = Rectangle(400,200,600,400)
 print(r.containsAny())
