@@ -12,17 +12,6 @@ import json
 import matplotlib.pyplot as plt
 
 '''
-plt.axis([0, 10, 0, 1])
-
-for i in range(10):
-    y = np.random.random()
-    plt.scatter(i, y)
-    plt.pause(0.05)
-
-plt.show()
-'''
-
-'''
 change this path to your project directory!
 (or maybe automatically detect path somehow)
 '''
@@ -78,8 +67,12 @@ def cropCar(frame, bbox):
     endX = max(0, endX)
     return frame[startY:endY, startX:endX]
 
-def updatePlot(data):
-    plt.scatter(data[0], data[1])
+def updatePlot(index, data):
+    pltData[index - 1] = data
+    objects = ('Lane 1', 'Lane 2')
+    yPos = np.arange(len(objects))
+    plt.bar(yPos, pltData, align='center', color=(0.2, 0.4, 0.6, 1))
+    plt.xticks(yPos, objects)
     plt.draw()
     plt.show(False)
 
@@ -90,7 +83,7 @@ def appendToDetectionNewRefPoint(frame, index, bbox, videoFileDir, box, currElem
     print("Lane " + str(lane.index) + ": Car " + str(lane.counter) + " detected")
 
     if not live:
-        updatePlot([lane.counter, lane.index])
+        updatePlot(lane.index, lane.counter)
 
     color = [255,  0 , 0]
     #cv2.putText(frame, str(lane.counter), (673, 279),cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
@@ -225,7 +218,9 @@ live = args["fromfile"] == ""
 testvideoPath = settings.getBaseDir() + args["fromfile"]
 
 if not live:
-    plt.axis([0, 10, 0, 3])
+    plt.ylabel('# cars detected')
+    plt.title('Detections per lane')
+    pltData = [0, 0]
     plt.show(False)
 
 if live:
