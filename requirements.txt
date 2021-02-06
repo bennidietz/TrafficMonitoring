@@ -1,2 +1,13 @@
 scikit-image
 pymoo
+numpy
+argparse
+imutils
+time
+opencv-contrib-python == 4.1.0.25
+json
+webbrowser
+settings
+datetime
+os
+matplotlib
