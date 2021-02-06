@@ -152,7 +152,8 @@ def analyze_video(stop_condition,vs,frame_skip):
                             followingRefPointMatches = list(filter(lambda n: n.rIndex > 0,currDetectedBBox.matches))
                             if len(firstRefPointMatches) == 0:
                                 # only points for second ref points are found -> assign it to its car group
-                                if (refPointIndex:= counting_cars.nextRefPointIndex(detectedCars, currDetectedBBox)) >= 0:
+                                refPointIndex = counting_cars.nextRefPointIndex(detectedCars, currDetectedBBox)
+                                if refPointIndex >= 0:
                                     # is probably the following ref point
                                     #TODO: assign as 2nd ref point
                                     millis = int(round(time.time() * 1000))
@@ -161,19 +162,22 @@ def analyze_video(stop_condition,vs,frame_skip):
                                     newCar = True
                                 # else: car was not found, so ignore the bounding box
                             elif len(firstRefPointMatches) == 1:
+                                
                                 if len(followingRefPointMatches) == 0:
                                     # only matches for 1st ref point -> create new car
                                     createNewCar(currDetectedBBox)
-                                elif (refPointIndex:= counting_cars.nextRefPointIndex(detectedCars, currDetectedBBox)) >= 0:
-                                    # is probably the following ref point
-                                    #TODO: assign as 2nd ref point
-                                    millis = int(round(time.time() * 1000))
-                                    currElement = [float(confidence), millis, startX, startY, endX, endY, (startX+endX)/2, (startY+endY)/2]
-                                    appendToDetectionNewRefPoint(frame, refPointIndex, currDetectedBBox, videoFileDir, box, currElement)
-                                    newCar = True
                                 else:
-                                    # only matches for 1st ref point -> create new car
-                                    createNewCar(currDetectedBBox)
+                                    refPointIndex= counting_cars.nextRefPointIndex(detectedCars, currDetectedBBox)
+                                    if refPointIndex >= 0:
+                                        # is probably the following ref point
+                                        #TODO: assign as 2nd ref point
+                                        millis = int(round(time.time() * 1000))
+                                        currElement = [float(confidence), millis, startX, startY, endX, endY, (startX+endX)/2, (startY+endY)/2]
+                                        appendToDetectionNewRefPoint(frame, refPointIndex, currDetectedBBox, videoFileDir, box, currElement)
+                                        newCar = True
+                                    else:
+                                        # only matches for 1st ref point -> create new car
+                                        createNewCar(currDetectedBBox)
                             else:
                                 # scenario: mutliple matches for first point -> ignore detection
                                 pass
@@ -228,7 +232,7 @@ else:
     print("[INFO] starting prerecorded video...")
     temp_vs = cv2.VideoCapture(testvideoPath)
     counting_cars.configure_refPoints(temp_vs, args["lanes"], args["lanepoints"], live)
-    analyze_video(temp_vs.isOpened,temp_vs, 1)
+    analyze_video(temp_vs.isOpened,temp_vs, 3)
 
 # save collected data to csv
 i=0
