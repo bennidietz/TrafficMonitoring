@@ -95,7 +95,7 @@ def belongsToBboxes(detectedArray, bbox):
         spatial_similarity.trial(currIndex, detectedArray[currIndex][-1], bbox)
         if bbox[1]-detectedArray[currIndex][-1][1] > timeDiffAcceptable:
             # time difference too high
-            print(bbox[1]-detectedArray[currIndex][-1][1])
+            #print(bbox[1]-detectedArray[currIndex][-1][1])
             return -1
         else:
             '''if len(detectedArray[currIndex]) > 2:
@@ -103,18 +103,18 @@ def belongsToBboxes(detectedArray, bbox):
                 shifts = getPath(detectedArray[currIndex])
                 print(shifts)'''
             sim = simMean(detectedArray[currIndex][-1], bbox)
-            if sim < 0.75:
-                print(sim)
+            #if sim < 0.75:
+                #print(sim)
             return currIndex
     else:
         if currIndex != -1:
             colorSim = simMean(detectedArray[currIndex][-1], bbox)
-            if colorSim > 0.83 and bbox[1]-detectedArray[currIndex][-1][1] < timeDiffAcceptable:
-                print(globalChange(detectedArray[currIndex]))
-                print(bbox)
-                print(colorSim)
-                print(minsim)
-                print(bbox[1]-detectedArray[currIndex][-1][1])
+            #if colorSim > 0.83 and bbox[1]-detectedArray[currIndex][-1][1] < timeDiffAcceptable:
+                #print(globalChange(detectedArray[currIndex]))
+                #print(bbox)
+                #print(colorSim)
+                #print(minsim)
+                #print(bbox[1]-detectedArray[currIndex][-1][1])
                 #return currIndex
             
         return -1

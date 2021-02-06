@@ -15,7 +15,7 @@ change this path to your project directory!
 (or maybe automatically detect path somehow)
 '''
 
-testvideoPath = settings.getBaseDir() + '/testfiles/crop.mp4'
+testvideoPath = settings.getBaseDir() + '/testfiles/out13.mp4'
 # testvideoPath = settings.getBaseDir() + '/testfiles/out3.mp4'
 # testvideoPath = settings.getBaseDir() + '/testfiles/highway.mov'
 
@@ -122,7 +122,7 @@ def analyze_video(stop_condition,vs,frame_skip):
                             cropped_frame )
                         # draw the prediction on the frame
                         label = "{}: {:.2f}%".format(CLASSES[idx],confidence * 100) + " " + str(currCounter)
-                    cv2.rectangle(frame, (startX, startY), (endX, endY),COLORS[idx], 2)
+                    cv2.rectangle(frame, (startX, startY), (endX, endY),boxcolor, 2)
                     y = startY - 15 if startY - 15 > 15 else startY + 15
                     cv2.putText(frame, label, (startX, y),cv2.FONT_HERSHEY_SIMPLEX, 0.5, boxcolor, 2)
                     # print("car!")
@@ -147,14 +147,17 @@ if live:
 else:
     print("[INFO] starting prerecorded video...")
     temp_vs = cv2.VideoCapture(testvideoPath)
-    analyze_video(temp_vs.isOpened,temp_vs, 1)
+    analyze_video(temp_vs.isOpened,temp_vs, 3)
 
 json_analyse_path = "testfiles/analyse.json"
 with open(json_analyse_path, 'a') as f:
     f.write(json.dumps(collectedDetections, separators=(',', ':')))
 
 # save collected data to csv
-output_file_path = "visualization/output.csv"
+i=0
+while os.path.exists(f'visualization/output{i}.csv'):
+    i+=1
+output_file_path = f'visualization/output{i}.csv'
 addCounter = 0
 if not os.path.isfile(output_file_path):
     with open(output_file_path, 'a') as f:
