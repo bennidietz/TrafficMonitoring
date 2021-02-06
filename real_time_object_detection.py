@@ -30,6 +30,8 @@ ap.add_argument("-p", "--lanepoints", type=int, default=2, metavar="[1-2]",
 	help="number of necessary lane points")
 ap.add_argument("-l", "--lanes", type=int, default=2, metavar="[1-10]",
 	help="number of lanes")
+ap.add_argument("-o", "--overlay", action='store_false',
+                help="dont display the counter overlay")
 args = vars(ap.parse_args())
 
 # initialize the list of class labels MobileNet SSD was trained to
@@ -76,7 +78,7 @@ def appendToDetectionNewRefPoint(frame, index, bbox, videoFileDir, box, currElem
     print(videoFileDir + "lane%d_car%d.jpg" %  (lane.index, lane.counter))
     cv2.imwrite(videoFileDir + "lane%d_car%d.jpg" %  (lane.index, lane.counter),
                             cropCar(frame, box) )
-    collectedDetections.append([lane.index,lane.counter, currElement])
+    collectedDetections[lane.index-1].append([lane.counter, currElement])
     pass
 
 
@@ -85,7 +87,7 @@ def appendToDetection(index, bbox):
         bbox.setTargetMatch(detectedCars[index].detectedBboxArr[-1].targetMatch)
     detectedCars[index].detectedBboxArr.append(bbox)
 
-collectedDetections = []
+collectedDetections = [[],[],[],[],[] ,[],[],[],[],[]]
 
 # stop_condition: determines, when the analysis is halted (eg when the videostream is over)
 # vs: the videostream (could be live from camera or from prerecorded)
@@ -189,7 +191,12 @@ def analyze_video(stop_condition,vs,frame_skip):
                     y = startY - 15 if startY - 15 > 15 else startY + 15
                     cv2.putText(frame, label, (startX, y),cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
         	# show the output frame
-            cv2.imshow("Frame", frame)
+            copy = frame.copy()
+            if(args["overlay"]):
+                for idx in range(args["lanes"]):
+                    detections = len(collectedDetections[idx])
+                    cv2.putText(copy, 'lane ' + str(idx+1) + ': ' + str(detections), (50, (30*(idx+1))), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2, cv2.LINE_AA)
+            cv2.imshow("Frame", copy)
             #cv2.setMouseCallback('Frame', on_mouse)
             frame_counter = 0
             continue
@@ -237,7 +244,7 @@ else:
             pass
         addCounter = int(line[0:1])
 with open(output_file_path, 'a') as f:
-    for bboxes in collectedDetections:
+    for bboxes in collectedDetections[0]:
         license_plate = ocr_license_plate.detect_license_plate(bboxes[0], videoFileDir)
         last = bboxes[-1]
         dt = datetime.datetime.fromtimestamp(last[1]/1000.0)
