@@ -75,7 +75,6 @@ def appendToDetectionNewRefPoint(frame, index, bbox, videoFileDir, box, currElem
     print("Lane " + str(lane.index) + ": Car " + str(lane.counter) + " detected")
     color = [255,  0 , 0]
     #cv2.putText(frame, str(lane.counter), (673, 279),cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-    print(videoFileDir + "lane%d_car%d.jpg" %  (lane.index, lane.counter))
     cv2.imwrite(videoFileDir + "lane%d_car%d.jpg" %  (lane.index, lane.counter),
                             cropCar(frame, box) )
     collectedDetections[lane.index-1].append([lane.counter, currElement])
@@ -232,24 +231,23 @@ else:
     analyze_video(temp_vs.isOpened,temp_vs, 1)
 
 # save collected data to csv
-output_file_path = "visualization/output.csv"
+i=0
+while os.path.exists(f'visualization/output{i}.csv'):
+    i += 1
+output_file_path = f'visualization/output{i}.csv'
 addCounter = 0
 if not os.path.isfile(output_file_path):
     with open(output_file_path, 'a') as f:
-        f.write("id,type,license_plate,date,time")
+        f.write("lane_id,car_id,type,license_plate,date,time")
         f.write('\n')
-else:
-    with open(output_file_path, 'rb') as fh:
-        for line in fh:
-            pass
-        addCounter = int(line[0:1])
 with open(output_file_path, 'a') as f:
-    for bboxes in collectedDetections[0]:
-        license_plate = ocr_license_plate.detect_license_plate(bboxes[0], videoFileDir)
-        last = bboxes[-1]
-        dt = datetime.datetime.fromtimestamp(last[1]/1000.0)
-        f.write(str(bboxes[0]+addCounter) + ",car," + str(license_plate) + "," + str(dt.date()) + "," + str(dt.time())[:5])
-        f.write('\n')
+    for idx, detection in enumerate(collectedDetections, start=1):
+        for bboxes in detection:
+            license_plate = ocr_license_plate.detect_license_plate(bboxes[0], videoFileDir)
+            last = bboxes[-1]
+            dt = datetime.datetime.fromtimestamp(last[1]/1000.0)
+            f.write(str(idx) + "," +str(bboxes[0]+addCounter) + ",car," + str(license_plate) + "," + str(dt.date()) + "," + str(dt.time())[:5])
+            f.write('\n')
 
 cv2.destroyAllWindows()
 #temp_vs.stop()
