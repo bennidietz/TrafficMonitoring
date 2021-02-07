@@ -1,4 +1,4 @@
-import car_counting_similarity as counting_cars
+import car_counting_refPoints as counting_cars
 
 def get_iou(bb1, bb2):
     """
@@ -55,10 +55,21 @@ def get_iou(bb1, bb2):
 def area(bbox):
     return (bbox["x2"]-bbox["x1"]) * (bbox["y2"]-bbox["y1"])
 
-def similarity(detection1, detection2):
+def similarityBBoxObject(det1, det2):
     '''
         calculate the similarity of two bounding boxes
         -> the more similiar two bounding boxes are,
+<<<<<<< HEAD:spatial_similarity_refPoints.py
+        the more likely it is that they are of the same car
+    '''
+    detection1 = det1.bbox
+    detection2 = det2.bbox
+
+    bbox_1 = dict({"x1": detection1.startX, "y1": detection1.startY,
+                "x2": detection1.endX, "y2": detection1.endY})
+    bbox_2 = dict({"x1": detection2.startX, "y1": detection2.startY,
+                "x2": detection2.endX, "y2": detection2.endY})
+=======
         the more likely it is that they are of the same car
     '''
     #sim = counting_cars.simMean(detection1[-1], detection2[-1])
@@ -89,6 +100,7 @@ def trial(index, detection1, detection2):
                 "x2": detection1[4], "y2": detection1[5]})
     bbox_2 = dict({"x1": detection2[2], "y1": detection2[3],
                 "x2": detection2[4], "y2": detection2[5]})
+>>>>>>> main:spatial_similarity.py
     area_ratio = counting_cars.ratio(area(bbox_1), area(bbox_2))
     x_sim = counting_cars.ratio((bbox_1["x1"]+bbox_1["x2"])/2, (bbox_2["x1"]+bbox_2["x2"])/2)
     y_sim = counting_cars.ratio((bbox_1["y1"]+bbox_1["y2"])/2, (bbox_2["y1"]+bbox_2["y2"])/2)

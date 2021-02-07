@@ -4,6 +4,7 @@ basePath = os.path.dirname(os.path.realpath(__file__))
 outputDir = basePath + "/output/"
 
 def getBaseDir(): return basePath
+
 def getOutputDir(): return outputDir
 
 def getEnding(string):

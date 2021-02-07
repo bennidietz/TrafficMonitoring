@@ -1,7 +1,3 @@
-# USAGE
-# python ocr_license_plate.py --input license_plates/group1
-# python ocr_license_plate.py --input license_plates/group2 --clear-border 1
-
 # import the necessary packages
 import os
 from pyimagesearch.anpr import PyImageSearchANPR
