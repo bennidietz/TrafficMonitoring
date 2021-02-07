@@ -1,4 +1,4 @@
-import counting_cars
+import car_counting_similarity as counting_cars
 
 def get_iou(bb1, bb2):
     """
@@ -58,7 +58,7 @@ def area(bbox):
 def similarity(detection1, detection2):
     '''
         calculate the similarity of two bounding boxes
-        -> the more similiar two bounding boxes are, 
+        -> the more similiar two bounding boxes are,
         the more likely it is that they are of the same car
     '''
     #sim = counting_cars.simMean(detection1[-1], detection2[-1])
@@ -80,7 +80,7 @@ def similarity(detection1, detection2):
 def trial(index, detection1, detection2):
     '''
         calculate the similarity of two bounding boxes
-        -> the more similiar two bounding boxes are, 
+        -> the more similiar two bounding boxes are,
         the more likely it is that they are of the same car
     '''
     #sim = counting_cars.simMean(detection1[-1], detection2[-1])

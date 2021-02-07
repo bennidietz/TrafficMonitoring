@@ -1,6 +1,6 @@
 # import the necessary packages
 import os, time, datetime, webbrowser, settings
-import counting_cars
+import car_counting_similarity as counting_cars
 import ocr_license_plate
 from imutils.video import VideoStream
 import numpy as np
