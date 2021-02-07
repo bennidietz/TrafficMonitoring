@@ -1,6 +1,6 @@
 import os, json
 import itertools, math
-import spatial_similarity
+import spatial_similarity_refPoints as spatial_similarity
 import imutils
 import cv2
 from pynput.keyboard import Key, Controller
