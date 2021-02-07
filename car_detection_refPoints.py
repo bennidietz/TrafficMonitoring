@@ -1,5 +1,5 @@
 # import the necessary packages
-import os, time, datetime, webbrowser, settings
+import os, shutil, datetime, webbrowser, settings
 import car_counting_refPoints as counting_cars
 import ocr_license_plate
 from imutils.video import VideoStream
@@ -176,7 +176,7 @@ def analyze_video(stop_condition,vs,frame_skip):
                                     newCar = True
                                 # else: car was not found, so ignore the bounding box
                             elif len(firstRefPointMatches) == 1:
-                                
+
                                 if len(followingRefPointMatches) == 0:
                                     # only matches for 1st ref point -> create new car
                                     createNewCar(currDetectedBBox)
@@ -274,5 +274,6 @@ with open(output_file_path, 'a') as f:
             f.write(str(idx) + "," +str(bboxes[0]+addCounter) + ",car," + str(license_plate) + "," + str(dt.date()) + "," + str(dt.time())[:5])
             f.write('\n')
 
+shutil.rmtree(videoFileDir)
 cv2.destroyAllWindows()
 #temp_vs.stop()
