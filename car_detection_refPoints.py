@@ -25,7 +25,7 @@ change this path to your project directory!
 ap = argparse.ArgumentParser()
 ap.add_argument("-c", "--confidence", type=float, default=0.47,
 	help="minimum probability to filter weak detections")
-ap.add_argument("-f", "--fromfile", type=str, default='/testfiles/out8.mp4',
+ap.add_argument("-f", "--fromfile", type=str, default='/testfiles/out13.mp4',
 	help="give relative path to prerecorded")
 ap.add_argument("-p", "--lanepoints", type=int, default=2, metavar="[1-2]",
 	help="number of necessary lane points")
@@ -76,7 +76,7 @@ def updatePlot(index, data):
     plt.bar(yPos, pltData, align='center', color=(0.2, 0.4, 0.6, 1))
     plt.xticks(yPos, objects)
     plt.draw()
-    plt.show(False)
+    plt.pause(0.000001)
 
 def appendToDetectionNewRefPoint(frame, index, bbox, videoFileDir, box, currElement):
     detectedCars[index].detectedBboxArr.append(bbox)
@@ -231,7 +231,7 @@ if not live:
     plt.ylabel('# cars detected')
     plt.title('Detections per lane')
     pltData = [0, 0]
-    plt.show(False)
+    plt.pause(0.0000001)
 
 if live:
     ending = "live"
@@ -253,7 +253,7 @@ else:
     print("[INFO] starting prerecorded video...")
     temp_vs = cv2.VideoCapture(testvideoPath)
     counting_cars.configure_refPoints(temp_vs, args["lanes"], args["lanepoints"], live)
-    analyze_video(temp_vs.isOpened,temp_vs, 3)
+    analyze_video(temp_vs.isOpened,temp_vs, 6)
 
 # save collected data to csv
 i=0
