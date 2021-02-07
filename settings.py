@@ -15,3 +15,11 @@ def printFileCreated(filename):
 
 def printFileAlreadyExists(filename):
     print("The file " + getEnding(filename) + " already exists.")
+
+# Disable
+def blockPrint():
+    sys.stdout = open(os.devnull, 'w')
+
+# Restore
+def enablePrint():
+    sys.stdout = sys.__stdout__
