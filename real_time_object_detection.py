@@ -9,6 +9,7 @@ import imutils
 import time
 import cv2
 import json
+import matplotlib.pyplot as plt
 
 '''
 change this path to your project directory!
@@ -24,7 +25,7 @@ change this path to your project directory!
 ap = argparse.ArgumentParser()
 ap.add_argument("-c", "--confidence", type=float, default=0.47,
 	help="minimum probability to filter weak detections")
-ap.add_argument("-f", "--fromfile", type=str, default='/testfiles/out13.mp4',
+ap.add_argument("-f", "--fromfile", type=str, default='/testfiles/out8.mp4',
 	help="give relative path to prerecorded")
 ap.add_argument("-p", "--lanepoints", type=int, default=2, metavar="[1-2]",
 	help="number of necessary lane points")
@@ -68,11 +69,24 @@ def cropCar(frame, bbox):
     endX = max(0, endX)
     return frame[startY:endY, startX:endX]
 
+def updatePlot(index, data):
+    pltData[index - 1] = data
+    objects = ('Lane 1', 'Lane 2')
+    yPos = np.arange(len(objects))
+    plt.bar(yPos, pltData, align='center', color=(0.2, 0.4, 0.6, 1))
+    plt.xticks(yPos, objects)
+    plt.draw()
+    plt.show(False)
+
 def appendToDetectionNewRefPoint(frame, index, bbox, videoFileDir, box, currElement):
     detectedCars[index].detectedBboxArr.append(bbox)
     bbox.matches[-1].getLane().onCarDetected()
     lane = bbox.matches[-1].getLane()
     print("Lane " + str(lane.index) + ": Car " + str(lane.counter) + " detected")
+
+    if not live:
+        updatePlot(lane.index, lane.counter)
+
     color = [255,  0 , 0]
     #cv2.putText(frame, str(lane.counter), (673, 279),cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
     cv2.imwrite(videoFileDir + "lane%d_car%d.jpg" %  (lane.index, lane.counter),
@@ -212,6 +226,13 @@ def analyze_video(stop_condition,vs,frame_skip):
 detectedCars = []
 live = args["fromfile"] == ""
 testvideoPath = settings.getBaseDir() + args["fromfile"]
+
+if not live:
+    plt.ylabel('# cars detected')
+    plt.title('Detections per lane')
+    pltData = [0, 0]
+    plt.show(False)
+
 if live:
     ending = "live"
 else:
