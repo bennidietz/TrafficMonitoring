@@ -25,7 +25,7 @@ change this path to your project directory!
 ap = argparse.ArgumentParser()
 ap.add_argument("-c", "--confidence", type=float, default=0.47,
 	help="minimum probability to filter weak detections")
-ap.add_argument("-f", "--fromfile", type=str, default='/testfiles/out13.mp4',
+ap.add_argument("-f", "--fromfile", type=str, default='',
 	help="give relative path to prerecorded")
 ap.add_argument("-p", "--lanepoints", type=int, default=2, metavar="[1-2]",
 	help="number of necessary lane points")
@@ -253,14 +253,13 @@ else:
     print("[INFO] starting prerecorded video...")
     temp_vs = cv2.VideoCapture(testvideoPath)
     counting_cars.configure_refPoints(temp_vs, args["lanes"], args["lanepoints"], live)
-    analyze_video(temp_vs.isOpened,temp_vs, 6)
+    analyze_video(temp_vs.isOpened,temp_vs, 10)
 
 # save collected data to csv
 i=0
 while os.path.exists(f'visualization/output{i}.csv'):
     i += 1
 output_file_path = f'visualization/output{i}.csv'
-addCounter = 0
 if not os.path.isfile(output_file_path):
     with open(output_file_path, 'a') as f:
         f.write("lane_id,car_id,type,license_plate,date,time")
@@ -273,6 +272,7 @@ with open(output_file_path, 'a') as f:
             dt = datetime.datetime.fromtimestamp(last[1]/1000.0)
             f.write(str(idx) + "," +str(bboxes[0]+addCounter) + ",car," + str(license_plate) + "," + str(dt.date()) + "," + str(dt.time())[:5])
             f.write('\n')
+
 
 shutil.rmtree(videoFileDir)
 cv2.destroyAllWindows()

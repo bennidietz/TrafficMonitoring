@@ -1,5 +1,5 @@
 # import the necessary packages
-import os, time, datetime, webbrowser, settings
+import os, time, datetime, shutil, webbrowser, settings
 import car_counting_similarity as counting_cars
 import ocr_license_plate
 from imutils.video import VideoStream
@@ -149,9 +149,9 @@ else:
     temp_vs = cv2.VideoCapture(testvideoPath)
     analyze_video(temp_vs.isOpened,temp_vs, 3)
 
-json_analyse_path = "testfiles/analyse.json"
-with open(json_analyse_path, 'a') as f:
-    f.write(json.dumps(collectedDetections, separators=(',', ':')))
+#json_analyse_path = "testfiles/analyse.json"
+#with open(json_analyse_path, 'a') as f:
+#    f.write(json.dumps(collectedDetections, separators=(',', ':')))
 
 # save collected data to csv
 i=0
@@ -179,5 +179,7 @@ with open(output_file_path, 'a') as f:
 # do a bit of cleanup
 for index, i in enumerate(collectedDetections):
     print("Car " + str(index) + ": " + str(counting_cars.globalChange(i)))
+    
+shutil.rmtree(videoFileDir)
 cv2.destroyAllWindows()
 #temp_vs.stop()

@@ -1,6 +1,6 @@
 import os, json
 import spatial_similarity
-from testdata import shortTestDetection
+#from testdata import shortTestDetection
 
 basePath = os.path.dirname(os.path.realpath(__file__))
 
